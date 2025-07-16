@@ -9,7 +9,7 @@ Giao diện hỗ trợ cả desktop và mobile, tối ưu hiệu ứng thị gi�
 
 - HTML5
 - CSS3 (Custom responsive, biến CSS root, gradient, box-shadow, v.v.)
-- (Optional: JavaScript nếu có thêm phần slide hoặc menu toggle)
+- JavaScript cho các phần slide và menu toggle
 
 ## ⚙️ Cách sử dụng
 
