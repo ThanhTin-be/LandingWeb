@@ -19,7 +19,7 @@ Giao diện hỗ trợ cả desktop và mobile, tối ưu hiệu ứng thị gi�
 
 ## 👨‍💻 Tác giả
 
-- **Họ tên:** [Đoàn Thanh Tín]
+- **Họ tên:** Đoàn Thanh Tín
 - **GitHub:** [https://github.com/ThanhTin-be](https://github.com/ThanhTin-be)
 - **Email:** thanhtin.vhu@gmail.com
 
