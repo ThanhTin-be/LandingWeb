@@ -20,8 +20,8 @@ Giao diện hỗ trợ cả desktop và mobile, tối ưu hiệu ứng thị gi�
 ## 👨‍💻 Tác giả
 
 - **Họ tên:** [Đoàn Thanh Tín]
-- **GitHub:** [https://github.com/tenban](https://github.com/tenban)
-- **Email:** [thanhtin.vhu@gmail.com]
+- **GitHub:** [https://github.com/ThanhTin-be](https://github.com/ThanhTin-be)
+- **Email:** thanhtin.vhu@gmail.com
 
 > Vui lòng ghi rõ nguồn khi sử dụng lại thiết kế hoặc mã nguồn từ project này.
 
