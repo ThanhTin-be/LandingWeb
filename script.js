@@ -309,4 +309,71 @@ document.addEventListener('DOMContentLoaded', function () {
     console.log('📋 Quy tắc autoplay:');
     console.log('   🎥 Slide video: KHÔNG tự động chuyển');
     console.log('   🖼️ Slide hình ảnh: TỰ ĐỘNG chuyển sau 5-7 giây');
+
+    // ===== COUNTER ANIMATION CHO STATISTICS =====
+    function animateCounter(element, start, end, duration, suffix = '') {
+        let startTimestamp = null;
+        const step = (timestamp) => {
+            if (!startTimestamp) startTimestamp = timestamp;
+            const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+            
+            // Sử dụng easing function để tạo hiệu ứng mượt mà
+            const easeOutQuart = 1 - Math.pow(1 - progress, 4);
+            const current = Math.floor(easeOutQuart * (end - start) + start);
+            
+            element.textContent = current.toLocaleString('vi-VN') + suffix;
+            
+            if (progress < 1) {
+                window.requestAnimationFrame(step);
+            } else {
+                element.textContent = end.toLocaleString('vi-VN') + suffix;
+            }
+        };
+        window.requestAnimationFrame(step);
+    }
+
+    // Khởi tạo Intersection Observer cho Statistics
+    const statsSection = document.querySelector('.community-stats');
+    if (statsSection) {
+        const statsObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    // Lấy tất cả các số cần animate
+                    const statNumbers = entry.target.querySelectorAll('.stat-number');
+                    
+                    statNumbers.forEach((statNumber, index) => {
+                        const text = statNumber.textContent;
+                        let targetNumber;
+                        let suffix = '';
+                        
+                        // Xử lý các loại số khác nhau
+                        if (text.includes('%')) {
+                            targetNumber = parseInt(text.replace('%', ''));
+                            suffix = '%';
+                        } else if (text.includes('+')) {
+                            targetNumber = parseInt(text.replace(/[+,]/g, ''));
+                            suffix = '+';
+                        } else {
+                            targetNumber = parseInt(text.replace(/[,]/g, ''));
+                        }
+                        
+                        // Delay khác nhau cho mỗi counter để tạo hiệu ứng cascade
+                        setTimeout(() => {
+                            animateCounter(statNumber, 0, targetNumber, 2000, suffix);
+                            // Thêm class để kích hoạt hiệu ứng underline
+                            statNumber.closest('.stat-item').classList.add('animated');
+                        }, index * 200);
+                    });
+                    
+                    // Chỉ chạy animation một lần
+                    statsObserver.unobserve(entry.target);
+                }
+            });
+        }, {
+            threshold: 0.5, // Kích hoạt khi 50% section hiển thị
+            rootMargin: '0px 0px -100px 0px' // Offset để animation kích hoạt sớm hơn
+        });
+
+        statsObserver.observe(statsSection);
+    }
 });

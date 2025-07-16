@@ -976,6 +976,25 @@ p {
     font-family: 'Merriweather', serif;
     margin-bottom: 10px;
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.stat-number::after {
+    content: '';
+    position: absolute;
+    bottom: -5px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 3px;
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 2px;
+    transition: width 0.8s ease 0.5s;
+}
+
+.stat-item.animated .stat-number::after {
+    width: 60%;
 }
 
 .stat-label {
