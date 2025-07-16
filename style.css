@@ -165,7 +165,7 @@ p {
     font-size: 0.9rem;
     border-radius: 25px;
     background: var(--primary-color);
-    color: var(--white) !important;
+
     box-shadow: none;
 }
 
@@ -1398,7 +1398,7 @@ p {
         padding: 15px 0;
         font-size: 1.1rem;
         border-bottom: 1px solid var(--bg-light);
-        color: var(--text-color) !important;
+        color: var(--text-color);
     }
 
     .main-nav a:not(.btn-nav)::after {
@@ -1409,6 +1409,8 @@ p {
         margin-top: 20px;
         text-align: center;
         padding: 12px 30px;
+        color: var(--white) !important;
+
     }
 
     /* Footer mobile */
@@ -1435,7 +1437,7 @@ p {
 @media (max-width: 480px) {
     .main-header .container {
         flex-wrap: wrap;
-        justify-content: center;
+        /* justify-content: center; */
     }
 
     .logo {
