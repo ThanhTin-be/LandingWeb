@@ -321,13 +321,15 @@ p {
     position: absolute;
     top: 50%;
     left: 50%;
-    width: 120vw; /* Tăng kích thước để đảm bảo bao phủ */
-    height: 67.5vw; /* 16:9 aspect ratio với buffer */
-    min-height: 120vh; /* Tăng chiều cao tối thiểu */
-    min-width: 213.33vh; /* 16:9 aspect ratio với buffer */
+    width: 100vw;
+    height: 56.25vw; /* 16:9 aspect ratio */
+    min-height: 100vh;
+    min-width: 177.77vh; /* 16:9 aspect ratio */
     transform: translate(-50%, -50%);
     pointer-events: none;
     z-index: -2;
+    opacity: 1;
+    transition: opacity 0.5s ease;
 }
 
 /* YouTube iframe styling */
@@ -342,8 +344,23 @@ p {
     object-fit: cover;
 }
 
+/* Fallback background khi YouTube không load */
+.video-slide.fallback-background {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%) !important;
+}
+
+.video-slide.fallback-background .youtube-video-container {
+    display: none;
+}
+
+.video-slide.fallback-background .youtube-background {
+    opacity: 0;
+}
+
 #youtube-player {
     background: transparent;
+    border: none;
+    outline: none;
 }
 
 .hero-video-overlay {
