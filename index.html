@@ -1,739 +1,650 @@
-<!DOCTYPE html>
-<html lang="vi">
+// ===== YOUTUBE API SETUP =====
+let youtubePlayer;
+let isYoutubeMuted = true;
+let isYouTubeAPIReady = false;
+let youtubeAPILoadAttempts = 0;
+const MAX_API_LOAD_ATTEMPTS = 3;
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hành Trình Quê Hương</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Merriweather:wght@400;700&display=swap"
-        rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
-    <link rel="stylesheet" href="css/style.css">
-</head>
+// Load YouTube API
+function loadYouTubeAPI() {
+    youtubeAPILoadAttempts++;
+    
+    // Kiểm tra nếu API đã được load
+    if (window.YT && window.YT.Player) {
+        console.log('✅ YouTube API đã có sẵn');
+        onYouTubeIframeAPIReady();
+        return;
+    }
+    
+    // Kiểm tra số lần thử
+    if (youtubeAPILoadAttempts > MAX_API_LOAD_ATTEMPTS) {
+        console.error('❌ Đã thử tải YouTube API quá nhiều lần, sử dụng fallback');
+        useFallbackBackground();
+        return;
+    }
+    
+    console.log(`🔄 Đang tải YouTube API (lần thử ${youtubeAPILoadAttempts})`);
+    
+    // Xóa script cũ nếu có
+    const existingScript = document.querySelector('script[src*="youtube.com/iframe_api"]');
+    if (existingScript) {
+        existingScript.remove();
+    }
+    
+    const tag = document.createElement('script');
+    tag.src = 'https://www.youtube.com/iframe_api';
+    tag.async = true;
+    tag.defer = true;
+    
+    // Xử lý lỗi khi load script
+    tag.onerror = function() {
+        console.error('❌ Không thể tải YouTube API script');
+        if (youtubeAPILoadAttempts < MAX_API_LOAD_ATTEMPTS) {
+            setTimeout(() => loadYouTubeAPI(), 2000);
+        } else {
+            useFallbackBackground();
+        }
+    };
+    
+    const firstScriptTag = document.getElementsByTagName('script')[0];
+    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+    
+    // Fallback nếu API không load được sau 8 giây
+    setTimeout(() => {
+        if (!isYouTubeAPIReady) {
+            console.warn('⚠️ YouTube API timeout, thử lại...');
+            if (youtubeAPILoadAttempts < MAX_API_LOAD_ATTEMPTS) {
+                loadYouTubeAPI();
+            } else {
+                useFallbackBackground();
+            }
+        }
+    }, 8000);
+}
 
-<body>
-    <!-- Hero Section với Slideshow -->
-    <section id="hero" class="hero-section">
-        <!-- Header được đặt bên trong Hero Section -->
-        <header class="main-header" id="mainHeader" data-aos="fade-down" data-aos-duration="800">
-            <div class="container">
-                <div class="logo">
-                    <a href="#hero">Hành Trình Quê Hương</a>
-                </div>
-                <nav class="main-nav">
-                    <ul>
-                        <li><a href="#y-nghia">Ý Nghĩa</a></li>
-                        <li><a href="#muc-tieu">Mục Tiêu</a></li>
-                        <li><a href="#cach-tham-gia">Cách Tham Gia</a></li>
-                        <li><a href="#bai-du-thi">Bài Dự Thi</a></li>
-                        <li><a href="#dang-ky" class="btn-nav" style="color: white;">Đăng Ký</a></li>
-                    </ul>
-                </nav>
-                <button class="menu-toggle" aria-label="Toggle navigation">
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                </button>
-            </div>
-        </header>
+// Fallback background khi YouTube không load được
+function useFallbackBackground() {
+    console.log('🎨 Sử dụng fallback background');
+    const videoSlide = document.querySelector('.video-slide');
+    const soundToggle = document.getElementById('soundToggle');
+    
+    if (videoSlide) {
+        videoSlide.style.background = 'linear-gradient(135deg, #007bff 0%, #0056b3 100%)';
+        videoSlide.classList.add('fallback-background');
+    }
+    
+    if (soundToggle) {
+        soundToggle.style.display = 'none';
+    }
+}
 
-        <!-- Swiper Container cho Slideshow -->
-        <div class="swiper hero-swiper">
-            <div class="swiper-wrapper">
+// YouTube API ready callback
+window.onYouTubeIframeAPIReady = function() {
+    isYouTubeAPIReady = true;
+    console.log('✅ YouTube API đã sẵn sàng');
+    
+    try {
+        initializeYouTubePlayer();
+    } catch (error) {
+        console.error('❌ Lỗi khi khởi tạo YouTube player:', error);
+        useFallbackBackground();
+    }
+};
 
-                <!-- Slide 1: Video Background -->
-                <div class="swiper-slide hero-slide video-slide">
-                    <!-- Container cho YouTube video background -->
-                    <div class="youtube-video-container">
-                        <div id="youtube-player" class="youtube-background" role="presentation" aria-hidden="true"></div>
-                        <div class="hero-video-overlay"></div>
-                    </div>
+// Khởi tạo YouTube Player
+function initializeYouTubePlayer() {
+    const playerElement = document.getElementById('youtube-player');
+    if (!playerElement) {
+        console.error('❌ Không tìm thấy element youtube-player');
+        useFallbackBackground();
+        return;
+    }
+    
+    console.log('🎬 Đang khởi tạo YouTube player...');
+    
+    try {
+        youtubePlayer = new YT.Player('youtube-player', {
+            height: '100%',
+            width: '100%',
+            videoId: 'NSnkb1IAjbE',
+            host: 'https://www.youtube-nocookie.com', // Sử dụng nocookie domain
+            playerVars: {
+                autoplay: 1,        // Tự động phát
+                mute: 1,           // Tắt âm mặc định
+                loop: 1,           // Phát lặp
+                playlist: 'NSnkb1IAjbE', // Cần thiết cho loop
+                controls: 0,       // Ẩn điều khiển
+                showinfo: 0,       // Ẩn thông tin video
+                modestbranding: 1, // Ẩn logo YouTube
+                iv_load_policy: 3, // Ẩn annotations
+                cc_load_policy: 0, // Ẩn phụ đề
+                playsinline: 1,    // Phát inline trên mobile
+                disablekb: 1,      // Tắt keyboard controls
+                fs: 0,             // Tắt fullscreen
+                rel: 0,            // Không hiện video liên quan
+                enablejsapi: 1,    // Bật JavaScript API
+                origin: window.location.origin,
+                wmode: 'opaque',   // Đảm bảo video hiển thị đúng
+                start: 0,          // Bắt đầu từ giây 0
+                end: 0,            // Không giới hạn thời gian kết thúc
+                quality: 'hd1080'  // Chất lượng cao
+            },
+            events: {
+                onReady: onPlayerReady,
+                onStateChange: onPlayerStateChange,
+                onError: onPlayerError
+            }
+        });
+    } catch (error) {
+        console.error('❌ Lỗi khi tạo YouTube player:', error);
+        useFallbackBackground();
+    }
+}
 
-                    <!-- Nội dung slide 1 -->
-                    <div class="container hero-content-wrapper">
-                        <div class="hero-content hero-content-left">
-                            <h1 data-aos="fade-right" data-aos-delay="100" data-aos-duration="1000">
-                                Hành Trình Quê Hương: Nơi Ký Ức Bắt Đầu
-                            </h1>
-                            <p class="subtitle" data-aos="fade-right" data-aos-delay="300" data-aos-duration="1000">
-                                Khám Phá, Chia Sẻ và Kết Nối Cùng Quê Hương Việt Nam
-                            </p>
-                            <a href="#dang-ky" class="btn btn-primary" data-aos="fade-right" data-aos-delay="500"
-                                data-aos-duration="1000">
-                                Tham Gia Ngay
-                            </a>
-                        </div>
-                    </div>
+// Xử lý khi player sẵn sàng
+function onPlayerReady(event) {
+    console.log('🎬 YouTube player đã sẵn sàng');
+    
+    try {
+        // Set chất lượng video cao nhất
+        const availableQualities = event.target.getAvailableQualityLevels();
+        console.log('📺 Chất lượng có sẵn:', availableQualities);
+        
+        if (availableQualities.includes('hd1080')) {
+            event.target.setPlaybackQuality('hd1080');
+        } else if (availableQualities.includes('hd720')) {
+            event.target.setPlaybackQuality('hd720');
+        } else if (availableQualities.includes('large')) {
+            event.target.setPlaybackQuality('large');
+        }
+        
+        // Bắt đầu phát video
+        event.target.playVideo();
+        console.log('▶️ Bắt đầu phát video');
+        
+        // Đảm bảo video được mute
+        event.target.mute();
+        isYoutubeMuted = true;
+        
+    } catch (error) {
+        console.error('❌ Lỗi khi cấu hình player:', error);
+        useFallbackBackground();
+    }
+}
 
-                    <!-- Nút điều khiển âm thanh (chỉ hiển thị trên slide video) -->
-                    <button id="soundToggle" class="sound-toggle" aria-label="Toggle sound">
-                        <i class="fas fa-volume-mute"></i>
-                    </button>
-                </div>
+// Xử lý thay đổi trạng thái player
+function onPlayerStateChange(event) {
+    const states = {
+        '-1': 'UNSTARTED',
+        '0': 'ENDED',
+        '1': 'PLAYING',
+        '2': 'PAUSED',
+        '3': 'BUFFERING',
+        '5': 'CUED'
+    };
+    
+    console.log('🔄 Trạng thái video:', states[event.data] || event.data);
+    
+    try {
+        // Đảm bảo video luôn phát lặp
+        if (event.data === YT.PlayerState.ENDED) {
+            setTimeout(() => {
+                if (youtubePlayer && typeof youtubePlayer.playVideo === 'function') {
+                    youtubePlayer.playVideo();
+                    console.log('🔄 Video kết thúc, phát lại');
+                }
+            }, 100);
+        }
+        
+        // Đảm bảo video được mute khi bắt đầu phát
+        if (event.data === YT.PlayerState.PLAYING && isYoutubeMuted) {
+            event.target.mute();
+        }
+        
+    } catch (error) {
+        console.error('❌ Lỗi khi xử lý thay đổi trạng thái:', error);
+    }
+}
 
-                <!-- Slide 2: Đà Lạt -->
-                <div class="swiper-slide hero-slide image-slide" style="background-image: url('assets/img/dalat.jpg');">
-                    <div class="hero-image-overlay"></div>
-                    <div class="container hero-content-wrapper">
-                        <div class="hero-content hero-content-left">
-                            <h1 data-aos="fade-right" data-aos-delay="100" data-aos-duration="1000">
-                                Đà Lạt - Thành Phố Ngàn Hoa
-                            </h1>
-                            <p class="subtitle" data-aos="fade-right" data-aos-delay="300" data-aos-duration="1000">
-                                Đà Lạt – nơi trái tim từng vụn vỡ cũng thấy mình dịu lại
-                            </p>
-                            <a href="#dang-ky" class="btn btn-primary" data-aos="fade-right" data-aos-delay="500"
-                                data-aos-duration="1000">
-                                Tham Gia Ngay
-                            </a>
-                        </div>
-                    </div>
-                </div>
+// Xử lý lỗi player
+function onPlayerError(event) {
+    console.error('❌ Lỗi YouTube player:', event.data);
+    
+    const errorMessages = {
+        2: 'Video ID không hợp lệ hoặc tham số không đúng',
+        5: 'Video không thể phát trên HTML5 player',
+        100: 'Video không tìm thấy hoặc bị xóa',
+        101: 'Video không cho phép nhúng',
+        150: 'Video không cho phép nhúng (giống 101)'
+    };
+    
+    const errorMessage = errorMessages[event.data] || `Lỗi không xác định (${event.data})`;
+    console.error('Chi tiết lỗi:', errorMessage);
+    
+    // Thử video khác hoặc sử dụng fallback
+    if (event.data === 100 || event.data === 101 || event.data === 150) {
+        console.log('🔄 Thử sử dụng video ID khác...');
+        // Có thể thử video ID khác ở đây
+        setTimeout(() => {
+            useFallbackBackground();
+        }, 1000);
+    } else {
+        useFallbackBackground();
+    }
+}
 
-                <!-- Slide 3: Vịnh Hạ Long -->
-                <div class="swiper-slide hero-slide image-slide"
-                    style="background-image: url('/assets/img/vinh-ha-long.jpg');">
-                    <div class="hero-image-overlay"></div>
-                    <div class="container hero-content-wrapper">
-                        <div class="hero-content hero-content-left">
-                            <h1 data-aos="fade-right" data-aos-delay="100" data-aos-duration="1000">
-                                Vịnh Hạ Long - Kỳ Quan Thiên Nhiên
-                            </h1>
-                            <p class="subtitle" data-aos="fade-right" data-aos-delay="300" data-aos-duration="1000">
-                                Nơi sóng hát thay lời, và đá núi kể chuyện ngàn năm
-                            </p>
-                            <a href="#dang-ky" class="btn btn-primary" data-aos="fade-right" data-aos-delay="500"
-                                data-aos-duration="1000">
-                                Tham Gia Ngay
-                            </a>
-                        </div>
-                    </div>
-                </div>
+// Khởi tạo thư viện AOS (Animate On Scroll)
+document.addEventListener('DOMContentLoaded', function () {
+    // Load YouTube API
+    loadYouTubeAPI();
+    
+    AOS.init({
+        duration: 1000, // thời gian chạy hiệu ứng (từ 0 đến 3000ms, bước nhảy 50ms)
+        easing: 'ease-in-out', // kiểu chuyển động mặc định cho các hiệu ứng AOS
+        once: true, // hiệu ứng chỉ chạy 1 lần khi cuộn xuống (không lặp lại khi cuộn lại lên)
+        mirror: false, // không chạy hiệu ứng khi cuộn ngược lên (tắt hiệu ứng ngược)
+        anchorPlacement: 'top-bottom', // xác định vị trí của phần tử sẽ kích hoạt hiệu ứng
+    });
 
-            </div>
+    // ===== KHỞI TẠO SWIPER CHO HERO SLIDESHOW =====
+    const heroSwiper = new Swiper('.hero-swiper', {
+        // Cấu hình cơ bản
+        loop: true, // Lặp vô hạn các slide
+        autoplay: false, // Tắt autoplay ban đầu (sẽ bật khi cần)
+        effect: 'fade', // Hiệu ứng chuyển slide fade
+        fadeEffect: {
+            crossFade: true // Hiệu ứng fade mượt mà
+        },
+        speed: 1000, // Tốc độ chuyển slide (1 giây)
 
-            <!-- Pagination dots -->
-            <div class="swiper-pagination"></div>
-        </div>
-    </section>
+        // Pagination (chấm tròn điều hướng)
+        pagination: {
+            el: '.swiper-pagination',
+            clickable: true, // Cho phép click vào chấm để chuyển slide
+            dynamicBullets: false, // Không sử dụng dynamic bullets
+        },
 
-    <main>
-        <!-- Về Chúng tôi -->
-        <section id="ve-chung-toi" class="section-padding">
-            <div class="container">
-                <h2 class="section-title" data-aos="fade-up" data-aos-duration="800">Về Chúng Tôi</h2>
-                <div class="about-us-grid">
-                    <div class="about-us-text" data-aos="fade-right" data-aos-delay="100" data-aos-duration="900">
-                        <p>
-                            "Hành Trình Quê Hương" được khởi xướng với sứ mệnh cao cả là tạo ra một không gian số, nơi
-                            mọi người con Việt Nam, dù ở bất cứ đâu, cũng có thể tìm về và chia sẻ tình yêu, ký ức về
-                            quê hương mình. Chúng tôi tin rằng mỗi vùng đất, mỗi con người đều mang trong mình những câu
-                            chuyện độc đáo, và việc lan tỏa những câu chuyện ấy sẽ góp phần gìn giữ và phát huy giá trị
-                            văn hóa Việt.
-                        </p>
-                        <p>
-                            Sứ mệnh của chúng tôi là kết nối cộng đồng, từ những người đang sinh sống tại Việt Nam đến
-                            những kiều bào xa xứ, cùng nhau xây dựng một kho tàng ký ức sống động về quê hương. Chúng
-                            tôi khuyến khích sự sáng tạo, khám phá và trân trọng những giá trị văn hóa, ẩm thực, phong
-                            cảnh và con người Việt Nam qua từng góc nhìn cá nhân.
-                        </p>
-                        <p>
-                            Hãy cùng chúng tôi trên hành trình này, để mỗi bước chân là một khám phá mới, mỗi câu chuyện
-                            là một kỷ niệm đẹp, và mỗi chia sẻ là một lời tri ân gửi đến mảnh đất đã nuôi dưỡng tâm hồn
-                            chúng ta.
-                        </p>
-                    </div>
-                    <div class="about-us-image" data-aos="fade-left" data-aos-delay="300" data-aos-duration="900">
-                        <img src="assets/img/hcm.jpg" alt="Vietnamese ">
-                    </div>
-                </div>
-            </div>
-        </section>
+        // Hỗ trợ chuột và touch
+        grabCursor: true, // Hiển thị con trỏ grab khi hover
+        touchRatio: 1, // Độ nhạy của touch
+        touchAngle: 45, // Góc touch để kích hoạt swipe
 
-        <!-- Ý Nghĩa Chiến Dịch -->
-        <section id="y-nghia" class="section-padding bg-light">
-            <div class="container">
-                <h2 class="section-title" data-aos="fade-up" data-aos-duration="800">Ý Nghĩa Chiến Dịch</h2>
-                <p class="section-description" data-aos="fade-up" data-aos-delay="100" data-aos-duration="800">
-                    "Hành Trình Quê Hương" là hành trình tìm về cội nguồn, nơi mà mỗi con người đều mang trong mình
-                    những ký ức đẹp đẽ nhất. Chiến dịch này không chỉ đơn thuần là một cuộc thi, mà còn là một không
-                    gian để chúng ta cùng nhau:
-                </p>
-                <div class="meaning-grid">
-                    <div class="meaning-card" data-aos="fade-right" data-aos-delay="200" data-aos-duration="900">
-                        <i class="fas fa-handshake"></i>
-                        <h3>Kết nối</h3>
-                        <p>Gắn kết những người con Việt Nam từ khắp mọi miền Tổ quốc và cả những người con xa xứ, cùng
-                            chia sẻ về quê hương mình.</p>
-                    </div>
-                    <div class="meaning-card" data-aos="fade-up" data-aos-delay="400" data-aos-duration="900">
-                        <i class="fas fa-book-open"></i>
-                        <h3>Lưu giữ</h3>
-                        <p>Ghi lại những khoảnh khắc, câu chuyện, hình ảnh và video độc đáo về vẻ đẹp văn hóa, con
-                            người, cảnh sắc của từng vùng đất.</p>
-                    </div>
-                    <div class="meaning-card" data-aos="fade-left" data-aos-delay="600" data-aos-duration="900">
-                        <i class="fas fa-seedling"></i>
-                        <h3>Lan tỏa</h3>
-                        <p>Truyền cảm hứng và tình yêu quê hương đến cộng đồng, đặc biệt là thế hệ trẻ.</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-        <!-- Mục Tiêu Cuộc Thi -->
-        <section id="muc-tieu" class="section-padding">
-            <div class="container">
-                <h2 class="section-title" data-aos="fade-up" data-aos-duration="800">Mục Tiêu Cuộc Thi</h2>
-                <div class="goals-grid">
-                    <div class="goal-item" data-aos="flip-left" data-aos-delay="100" data-aos-duration="900">
-                        <h4>Tạo kho tàng nội dung đa dạng</h4>
-                        <p>Về văn hóa, ẩm thực, phong cảnh, con người Việt Nam từ góc nhìn cá nhân.</p>
-                    </div>
-                    <div class="goal-item" data-aos="flip-left" data-aos-delay="200" data-aos-duration="900">
-                        <h4>Thúc đẩy tinh thần tự hào dân tộc</h4>
-                        <p>Khuyến khích mọi người tìm hiểu, khám phá và trân trọng giá trị của quê hương.</p>
-                    </div>
-                    <div class="goal-item" data-aos="flip-left" data-aos-delay="300" data-aos-duration="900">
-                        <h4>Xây dựng cộng đồng trực tuyến</h4>
-                        <p>Nơi mọi người có thể tương tác, học hỏi và chia sẻ những câu chuyện ý nghĩa.</p>
-                    </div>
-                    <div class="goal-item" data-aos="flip-left" data-aos-delay="400" data-aos-duration="900">
-                        <h4>Nâng cao nhận diện thương hiệu/chiến dịch</h4>
-                        <p>Thông qua sự lan truyền trên mạng xã hội.</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-        <!-- Cách Tham Gia -->
-        <section id="cach-tham-gia" class="section-padding bg-light">
-            <div class="container">
-                <h2 class="section-title" data-aos="fade-up" data-aos-duration="800">Cách Tham Gia</h2>
-                <p class="section-description" data-aos="fade-up" data-aos-delay="100" data-aos-duration="800">
-                    Tham gia "Hành Trình Quê Hương" vô cùng đơn giản, bạn chỉ cần thực hiện theo các bước sau:
-                </p>
-                <div class="steps-grid">
-                    <div class="step-card" data-aos="slide-up" data-aos-delay="200" data-aos-duration="900">
-                        <div class="step-number">1</div>
-                        <h3>Sáng tạo nội dung</h3>
-                        <p>Hãy kể câu chuyện về quê hương bạn qua hình ảnh (ít nhất 3 ảnh), video (tối đa 3 phút) hoặc
-                            bài viết (tối thiểu 300 từ).</p>
-                        <ul class="content-types">
-                            <li><i class="icon-location"></i> Những địa điểm đẹp, danh lam thắng cảnh.</li>
-                            <li><i class="icon-food"></i> Đặc sản ẩm thực độc đáo.</li>
-                            <li><i class="icon-culture"></i> Nét văn hóa truyền thống, lễ hội.</li>
-                            <li><i class="icon-people"></i> Chân dung con người, câu chuyện đời thường.</li>
-                            <li><i class="icon-heart"></i> Cảm xúc và kỷ niệm cá nhân gắn liền với quê hương.</li>
-                        </ul>
-                    </div>
-                    <div class="step-card" data-aos="slide-up" data-aos-delay="400" data-aos-duration="900">
-                        <div class="step-number">2</div>
-                        <h3>Đăng tải và chia sẻ</h3>
-                        <p>Đăng nội dung của bạn lên mạng xã hội (Facebook, Instagram, TikTok, YouTube) ở chế độ công
-                            khai kèm theo hashtag của chiến dịch.</p>
+        // Keyboard navigation
+        keyboard: {
+            enabled: true, // Cho phép điều khiển bằng bàn phím
+            onlyInViewport: true, // Chỉ hoạt động khi slider trong viewport
+        },
 
-                    </div>
-                    <div class="step-card" data-aos="slide-up" data-aos-delay="600" data-aos-duration="900">
-                        <div class="step-number">3</div>
-                        <h3>Điền form đăng ký</h3>
-                        <p>Hoàn thành form đăng ký tham gia cuộc thi trên website của chúng tôi để ban tổ chức ghi nhận
-                            bài dự thi của bạn.</p>
+        // Responsive breakpoints
+        breakpoints: {
+            320: {
+                touchRatio: 1.5, // Tăng độ nhạy touch trên mobile
+            },
+            768: {
+                touchRatio: 1,
+            }
+        },
 
-                    </div>
-                </div>
-            </div>
-        </section>
+        // Events
+        on: {
+            slideChange: function () {
+                const activeSlide = this.slides[this.activeIndex];
+                const soundToggle = document.getElementById('soundToggle');
 
-        <!-- Parallax Quote Section - Câu thơ về quê hương -->
-        <section class="parallax-quote-section" data-aos="fade-up" data-aos-duration="1000">
-            <div class="parallax-overlay"></div>
-            <div class="container">
-                <div class="quote-content">
-                    <p class="quote-text" data-aos="fade-up" data-aos-delay="200" data-aos-duration="1200">
-                        "Quê hương là chùm khế ngọt<br>
-                        Cho con trèo hái mỗi ngày<br>
-                        Quê hương là đường đi học<br>
-                        Con về rợp bướm vàng bay"
-                    </p>
-                    <p class="quote-author" data-aos="fade-up" data-aos-delay="400" data-aos-duration="1000">
-                        - Đỗ Trung Quân -
-                    </p>
-                </div>
-            </div>
-        </section>
+                // Kiểm tra loại slide hiện tại
+                if (activeSlide && activeSlide.classList.contains('video-slide')) {
+                    // ===== SLIDE VIDEO =====
+                    soundToggle.style.display = 'flex';
 
-        <!-- Bài dự thi -->
-        <section id="bai-du-thi" class="section-padding ">
-            <div class="container">
-                <h2 class="section-title" data-aos="fade-up" data-aos-duration="800">Bài Dự Thi Nổi Bật</h2>
-                <p class="section-description" data-aos="fade-up" data-aos-delay="100" data-aos-duration="800">
-                    Khám phá những câu chuyện và hình ảnh đầy cảm xúc về quê hương Việt Nam từ cộng đồng của chúng ta.
-                </p>
-                <div class="submission-grid">
-                    <!-- Card 1 -->
-                    <div class="submission-card" data-aos="fade-up" data-aos-delay="200" data-aos-duration="900">
-                        <div class="card-image-wrapper">
-                            <img src="assets/img/lang-chai-rach-vem-binh-minh.jpg" alt="Làng chài Việt Nam">
-                            <div class="card-overlay">
-                                <div class="card-overlay-content">
-                                    <i class="fas fa-eye"></i>
-                                    <span>Xem chi tiết</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="card-content">
-                            <h3>Bình Minh Làng Chài</h3>
-                            <p class="description">Bình minh trên làng chài Rạch Vẹm, Phú Quốc, mang đến vẻ đẹp yên bình
-                                và cuộc sống mưu sinh của ngư dân. Nơi đây không chỉ có hải sản tươi ngon mà còn là điểm
-                                đến lý tưởng để ngắm cảnh.</p>
-                            <p class="author"><span class="author-info author-name"><i
-                                        class="fa-solid fa-user mr-2"></i> Đoàn Thanh Tín</span><span
-                                    class="author-info author-location"><i class="fa-solid fa-map-marker-alt mr-2"></i>
-                                    Kiên
-                                    Giang</span></p>
-                        </div>
-                    </div>
-                    <!-- Card 2 -->
-                    <div class="submission-card" data-aos="fade-up" data-aos-delay="300" data-aos-duration="900">
-                        <div class="card-image-wrapper">
-                            <img src="assets/img/vinh-ha-long.jpg" alt="Vịnh Hạ Long">
-                            <div class="card-overlay">
-                                <div class="card-overlay-content">
-                                    <i class="fas fa-eye"></i>
-                                    <span>Xem chi tiết</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="card-content">
-                            <h3>Vịnh Hạ Long Huyền Ảo</h3>
-                            <p class="description">Vịnh Hạ Long, di sản thiên nhiên thế giới, với hàng ngàn đảo đá vôi
-                                lớn nhỏ và làn nước xanh ngọc bích. Mỗi góc nhìn đều là một bức tranh tuyệt mỹ của tạo
-                                hóa.</p>
-                            <p class="author"><span class="author-info author-name"><i
-                                        class="fa-solid fa-user mr-2"></i> Nguyễn Phạm Anh Thư</span><span
-                                    class="author-info author-location"><i class="fa-solid fa-map-marker-alt mr-2"></i>
-                                    Quảng
-                                    Ninh</span></p>
-                        </div>
-                    </div>
-                    <!-- Card 3 -->
-                    <div class="submission-card" data-aos="fade-up" data-aos-delay="400" data-aos-duration="900">
-                        <div class="card-image-wrapper">
-                            <img src="assets/img/Hội An.jfif" alt="Phố cổ Hội An">
-                            <div class="card-overlay">
-                                <div class="card-overlay-content">
-                                    <i class="fas fa-eye"></i>
-                                    <span>Xem chi tiết</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="card-content">
-                            <h3>Nét Đẹp Phố Cổ Hội An</h3>
-                            <p class="description">Hội An với những con phố đèn lồng lung linh, kiến trúc cổ kính và ẩm
-                                thực đường phố phong phú. Nơi đây lưu giữ hồn Việt qua từng mái ngói, từng con hẻm nhỏ.
-                            </p>
-                            <p class="author"><span class="author-info author-name"><i
-                                        class="fa-solid fa-user mr-2"></i>Trần Châu Thanh Phong</span><span
-                                    class="author-info author-location"><i class="fa-solid fa-map-marker-alt mr-2"></i>
-                                    Quảng
-                                    Nam</span></p>
-                        </div>
-                    </div>
-                    <!-- Card 4 -->
-                    <div class="submission-card" data-aos="fade-up" data-aos-delay="500" data-aos-duration="900">
-                        <div class="card-image-wrapper">
-                            <img src="assets/img/sapa-mua-lua-chin-1.jpg" alt="Ruộng bậc thang Sapa">
-                            <div class="card-overlay">
-                                <div class="card-overlay-content">
-                                    <i class="fas fa-eye"></i>
-                                    <span>Xem chi tiết</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="card-content">
-                            <h3>Sapa Mùa Lúa Chín</h3>
-                            <p class="description">Ruộng bậc thang Sapa vào mùa lúa chín vàng óng ả, tạo nên khung cảnh
-                                hùng vĩ và thơ mộng. Đây là biểu tượng của sự lao động cần cù và vẻ đẹp thiên nhiên Tây
-                                Bắc.</p>
-                            <p class="author"><span class="author-info author-name"><i
-                                        class="fa-solid fa-user mr-2"></i> Ngô Ngọc Sơn</span><span
-                                    class="author-info author-location"><i class="fa-solid fa-map-marker-alt mr-2"></i>
-                                    Lào
-                                    Cai</span></p>
-                        </div>
-                    </div>
-                    <!-- Card 5 -->
-                    <div class="submission-card" data-aos="fade-up" data-aos-delay="600" data-aos-duration="900">
-                        <div class="card-image-wrapper">
-                            <img src="assets/img/cho noi cái răng.jpg" alt="Chợ nổi Cái Răng">
-                            <div class="card-overlay">
-                                <div class="card-overlay-content">
-                                    <i class="fas fa-eye"></i>
-                                    <span>Xem chi tiết</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="card-content">
-                            <h3>Chợ Nổi Cái Răng</h3>
-                            <p class="description">Chợ nổi Cái Răng, Cần Thơ, là nét văn hóa đặc trưng của miền Tây sông
-                                nước. Cuộc sống tấp nập trên sông với những chiếc ghe đầy ắp trái cây và hàng hóa.</p>
-                            <p class="author"><span class="author-info author-name"><i
-                                        class="fa-solid fa-user mr-2"></i> Tỉm</span><span
-                                    class="author-info author-location"><i class="fa-solid fa-map-marker-alt mr-2"></i>
-                                    Cần
-                                    Thơ</span></p>
-                        </div>
-                    </div>
-                    <!-- Card 6 -->
-                    <div class="submission-card" data-aos="fade-up" data-aos-delay="700" data-aos-duration="900">
-                        <div class="card-image-wrapper">
-                            <img src="assets/img/kham-pha-hue-mong-mo.jpg" alt="Kinh thành Huế">
-                            <div class="card-overlay">
-                                <div class="card-overlay-content">
-                                    <i class="fas fa-eye"></i>
-                                    <span>Xem chi tiết</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="card-content">
-                            <h3>Cố Đô Huế Thâm Nghiêm</h3>
-                            <p class="description">Kinh thành Huế, nơi lưu giữ những giá trị lịch sử và văn hóa của
-                                triều Nguyễn. Mỗi công trình kiến trúc đều kể một câu chuyện về quá khứ vàng son của dân
-                                tộc.</p>
-                            <p class="author"><span class="author-info author-name"><i
-                                        class="fa-solid fa-user mr-2"></i> Tít</span><span
-                                    class="author-info author-location"><i class="fa-solid fa-map-marker-alt mr-2"></i>
-                                    Thừa
-                                    Thiên Huế</span></p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
+                    // ❌ DỪNG AUTOPLAY khi ở slide video
+                    if (this.autoplay.running) {
+                        this.autoplay.stop();
+                        console.log('🎥 Đang ở slide video - Dừng autoplay');
+                    }
 
-        <!-- Cảm Xúc Cộng Đồng -->
-        <section id="cam-xuc-cong-dong" class="section-padding bg-light">
-            <div class="container">
-                <h2 class="section-title" data-aos="fade-up" data-aos-duration="800">Cảm Xúc Cộng Đồng</h2>
-                <p class="section-description" data-aos="fade-up" data-aos-delay="100" data-aos-duration="800">
-                    Những chia sẻ chân thành từ trái tim của cộng đồng về tình yêu quê hương và ý nghĩa của chiến dịch.
-                </p>
+                    // Đảm bảo YouTube video đang phát
+                    if (youtubePlayer && typeof youtubePlayer.getPlayerState === 'function') {
+                        try {
+                            const state = youtubePlayer.getPlayerState();
+                            if (state !== YT.PlayerState.PLAYING) {
+                                youtubePlayer.playVideo();
+                            }
+                        } catch (error) {
+                            console.error('❌ Lỗi khi kiểm tra trạng thái video:', error);
+                        }
+                    }
+                } else {
+                    // ===== SLIDE HÌNH ẢNH =====
+                    soundToggle.style.display = 'none';
 
-                <div class="emotions-grid">
-                    <!-- Testimonial 1 -->
-                    <div class="emotion-card" data-aos="fade-up" data-aos-delay="200" data-aos-duration="900">
-                        <div class="emotion-content">
-                            <div class="quote-icon">
-                                <i class="fas fa-quote-left"></i>
-                            </div>
-                            <p class="emotion-text">
-                                "Tham gia 'Hành Trình Quê Hương' giúp tôi nhận ra rằng mỗi góc phố, mỗi con người ở quê
-                                nhà đều có những câu chuyện đẹp đẽ riêng. Tôi cảm thấy tự hào hơn về nơi mình sinh ra và
-                                lớn lên."
-                            </p>
-                            <div class="emotion-author">
-                                <div class="author-avatar">
-                                    <i class="fas fa-user"></i>
-                                </div>
-                                <div class="author-info">
-                                    <h4>Đoàn Thanh Tín</h4>
-                                    <p>Hà Nội</p>
-                                    <div class="emotion-rating">
-                                        <i class="fas fa-star"></i>
-                                        <i class="fas fa-star"></i>
-                                        <i class="fas fa-star"></i>
-                                        <i class="fas fa-star"></i>
-                                        <i class="fas fa-star"></i>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    // Tạm dừng YouTube video khi không ở slide video
+                    if (youtubePlayer && typeof youtubePlayer.pauseVideo === 'function') {
+                        try {
+                            youtubePlayer.pauseVideo();
+                        } catch (error) {
+                            console.error('❌ Lỗi khi tạm dừng video:', error);
+                        }
+                    }
 
-                    <!-- Testimonial 2 -->
-                    <div class="emotion-card" data-aos="fade-up" data-aos-delay="300" data-aos-duration="900">
-                        <div class="emotion-content">
-                            <div class="quote-icon">
-                                <i class="fas fa-quote-left"></i>
-                            </div>
-                            <p class="emotion-text">
-                                "Là người xa quê, chiến dịch này như một cây cầu nối giúp tôi gần gũi hơn với quê hương.
-                                Mỗi bài chia sẻ đều khiến tôi nhớ về những kỷ niệm tuổi thơ và tình yêu dành cho mảnh
-                                đất quê."
-                            </p>
-                            <div class="emotion-author">
-                                <div class="author-avatar">
-                                    <i class="fas fa-user"></i>
-                                </div>
-                                <div class="author-info">
-                                    <h4>Nguyễn Phạm Anh Thư</h4>
-                                    <p>Kiều bào tại Mỹ</p>
-                                    <div class="emotion-rating">
-                                        <i class="fas fa-star"></i>
-                                        <i class="fas fa-star"></i>
-                                        <i class="fas fa-star"></i>
-                                        <i class="fas fa-star"></i>
-                                        <i class="fas fa-star"></i>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    // ✅ BẬT AUTOPLAY khi ở slide hình ảnh
+                    if (!this.autoplay.running) {
+                        // Cấu hình autoplay cho slide hình ảnh
+                        this.autoplay.delay = 5000; // 5 giây cho mỗi slide ảnh
+                        this.autoplay.start();
+                        console.log('🖼️ Đang ở slide hình ảnh - Bật autoplay');
+                    }
+                }
 
-                    <!-- Testimonial 3 -->
-                    <div class="emotion-card" data-aos="fade-up" data-aos-delay="400" data-aos-duration="900">
-                        <div class="emotion-content">
-                            <div class="quote-icon">
-                                <i class="fas fa-quote-left"></i>
-                            </div>
-                            <p class="emotion-text">
-                                "Thông qua việc chia sẻ về quê hương, tôi đã kết nối được với nhiều bạn bè mới có cùng
-                                tình yêu với Việt Nam. Cảm ơn 'Hành Trình Quê Hương' đã tạo ra một cộng đồng tuyệt vời
-                                như vậy!"
-                            </p>
-                            <div class="emotion-author">
-                                <div class="author-avatar">
-                                    <i class="fas fa-user"></i>
-                                </div>
-                                <div class="author-info">
-                                    <h4>Trần Châu Thanh Phong</h4>
-                                    <p>TP. Hồ Chí Minh</p>
-                                    <div class="emotion-rating">
-                                        <i class="fas fa-star"></i>
-                                        <i class="fas fa-star"></i>
-                                        <i class="fas fa-star"></i>
-                                        <i class="fas fa-star"></i>
-                                        <i class="fas fa-star"></i>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                // Làm mới hiệu ứng AOS cho slide mới
+                AOS.refresh();
+            },
 
-                    <!-- Testimonial 4 -->
-                    <div class="emotion-card" data-aos="fade-up" data-aos-delay="500" data-aos-duration="900">
-                        <div class="emotion-content">
-                            <div class="quote-icon">
-                                <i class="fas fa-quote-left"></i>
-                            </div>
-                            <p class="emotion-text">
-                                "Chiến dịch đã khuyến khích tôi khám phá nhiều địa điểm đẹp ở quê nhà mà trước đây chưa
-                                từng biết đến. Mỗi chuyến đi đều mang lại những trải nghiệm và cảm xúc mới mẻ."
-                            </p>
-                            <div class="emotion-author">
-                                <div class="author-avatar">
-                                    <i class="fas fa-user"></i>
-                                </div>
-                                <div class="author-info">
-                                    <h4>Ngô Ngọc Sơn</h4>
-                                    <p>Đà Nẵng</p>
-                                    <div class="emotion-rating">
-                                        <i class="fas fa-star"></i>
-                                        <i class="fas fa-star"></i>
-                                        <i class="fas fa-star"></i>
-                                        <i class="fas fa-star"></i>
-                                        <i class="fas fa-star"></i>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+            // Xử lý khi slider được khởi tạo
+            init: function () {
+                const firstSlide = this.slides[this.activeIndex];
+                const soundToggle = document.getElementById('soundToggle');
 
-                    <!-- Testimonial 5 -->
-                    <div class="emotion-card" data-aos="fade-up" data-aos-delay="600" data-aos-duration="900">
-                        <div class="emotion-content">
-                            <div class="quote-icon">
-                                <i class="fas fa-quote-left"></i>
-                            </div>
-                            <p class="emotion-text">
-                                "Được thấy những hình ảnh và câu chuyện về các vùng miền khác nhau của Việt Nam thật sự
-                                mở mang tầm mắt. Tôi hiểu thêm về sự đa dạng và phong phú của đất nước mình."
-                            </p>
-                            <div class="emotion-author">
-                                <div class="author-avatar">
-                                    <i class="fas fa-user"></i>
-                                </div>
-                                <div class="author-info">
-                                    <h4>Tít</h4>
-                                    <p>Cần Thơ</p>
-                                    <div class="emotion-rating">
-                                        <i class="fas fa-star"></i>
-                                        <i class="fas fa-star"></i>
-                                        <i class="fas fa-star"></i>
-                                        <i class="fas fa-star"></i>
-                                        <i class="fas fa-star"></i>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                // Kiểm tra slide đầu tiên
+                if (firstSlide && firstSlide.classList.contains('video-slide')) {
+                    soundToggle.style.display = 'flex';
+                    console.log('🎬 Khởi tạo với slide video - Autoplay tắt');
+                } else {
+                    soundToggle.style.display = 'none';
+                    // Nếu slide đầu không phải video, bật autoplay
+                    this.autoplay.delay = 5000;
+                    this.autoplay.start();
+                    console.log('🖼️ Khởi tạo với slide hình ảnh - Autoplay bật');
+                }
+            }
+        }
+    });
 
-                    <!-- Testimonial 6 -->
-                    <div class="emotion-card" data-aos="fade-up" data-aos-delay="700" data-aos-duration="900">
-                        <div class="emotion-content">
-                            <div class="quote-icon">
-                                <i class="fas fa-quote-left"></i>
-                            </div>
-                            <p class="emotion-text">
-                                "Tôi rất vui khi thấy thế hệ trẻ quan tâm và yêu thương quê hương. 'Hành Trình Quê
-                                Hương' đã tạo ra một làn sóng tích cực, lan tỏa tình yêu đất nước đến mọi người."
-                            </p>
-                            <div class="emotion-author">
-                                <div class="author-avatar">
-                                    <i class="fas fa-user"></i>
-                                </div>
-                                <div class="author-info">
-                                    <h4>Tỉm</h4>
-                                    <p>Huế</p>
-                                    <div class="emotion-rating">
-                                        <i class="fas fa-star"></i>
-                                        <i class="fas fa-star"></i>
-                                        <i class="fas fa-star"></i>
-                                        <i class="fas fa-star"></i>
-                                        <i class="fas fa-star"></i>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+    // ===== XỬ LÝ HEADER TRONG SUỐT =====
+    const header = document.getElementById('mainHeader');
+    const heroSection = document.getElementById('hero');
 
-                <!-- Statistics -->
-                <div class="community-stats" data-aos="fade-up" data-aos-delay="200" data-aos-duration="1000">
-                    <div class="stats-grid">
-                        <div class="stat-item">
-                            <div class="stat-number">2,500+</div>
-                            <div class="stat-label">Người tham gia</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-number">1,200+</div>
-                            <div class="stat-label">Bài dự thi</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-number">34</div>
-                            <div class="stat-label">Tỉnh thành</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-number">98%</div>
-                            <div class="stat-label">Hài lòng</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
+    // Tạo Intersection Observer để theo dõi Hero Section
+    const heroObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                // Khi Hero Section hiển thị - header trong suốt
+                header.classList.remove('scrolled');
+            } else {
+                // Khi cuộn qua Hero Section - header có nền trắng
+                header.classList.add('scrolled');
+            }
+        });
+    }, {
+        threshold: 0.1, // Kích hoạt khi 10% Hero Section còn hiển thị
+        rootMargin: '-50px 0px 0px 0px' // Offset để header chuyển đổi sớm hơn một chút
+    });
 
-        <!-- Cách đăng ký -->
-        <section id="dang-ky" class="cta-section section-padding">
-            <div class="container">
-                <h2 class="section-title text-white" data-aos="fade-up" data-aos-duration="800">Sẵn Sàng Chia Sẻ Câu
-                    Chuyện Quê Hương Bạn?</h2>
-                <p class="section-description text-white" data-aos="fade-up" data-aos-delay="100"
-                    data-aos-duration="800">
-                    Hãy cùng chúng tôi viết nên những trang sử mới cho tình yêu quê hương Việt Nam.
-                </p>
-                <form class="registration-form" data-aos="fade-up" data-aos-delay="200" data-aos-duration="1000">
-                    <div class="form-group">
-                        <label for="name">Họ và Tên:</label>
-                        <input type="text" id="name" name="name" placeholder="Nhập họ và tên của bạn" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="email">Email:</label>
-                        <input type="email" id="email" name="email" placeholder="Nhập địa chỉ email của bạn" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="city">Thành Phố/Tỉnh:</label>
-                        <input type="text" id="city" name="city" placeholder="Ví dụ: Hà Nội, TP.HCM" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="submission_link">Link Bài Dự Thi (nếu có):</label>
-                        <input type="url" id="submission_link" name="submission_link"
-                            placeholder="Dán link bài dự thi của bạn (Google Drive, YouTube, Facebook, v.v.)">
-                        <small class="form-hint">Hoặc tải lên từ máy tính của bạn bên dưới.</small>
-                    </div>
-                    <div class="form-group">
-                        <label for="submission_file">Tải Bài Dự Thi Lên (nếu có):</label>
-                        <input type="file" id="submission_file" name="submission_file"
-                            accept="image/*,video/*,.doc,.docx,.pdf">
-                        <small class="form-hint">Chấp nhận ảnh, video, tài liệu (Word, PDF).</small>
-                    </div>
-                    <button type="submit" class="btn btn-secondary" data-aos="zoom-in" data-aos-delay="300"
-                        data-aos-duration="1000">Gửi Đăng Ký</button>
-                </form>
-            </div>
-        </section>
+    // Bắt đầu theo dõi Hero Section
+    heroObserver.observe(heroSection);
 
-    </main>
-    <!-- Footer -->
-    <footer class="main-footer">
-        <div class="container">
-            <div class="footer-grid">
-                <!-- Thông tin chính -->
-                <div class="footer-col footer-info">
-                    <div class="logo">
-                        <a href="#hero">Hành Trình Quê Hương</a>
-                    </div>
-                    <p class="footer-tagline">Kết nối, lưu giữ và chia sẻ những câu chuyện, hình ảnh về quê hương Việt
-                        Nam yêu dấu</p>
-                </div>
+    // ===== CUỘN MƯỢT CHO NAVIGATION =====
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
 
-                <!-- Liên kết nhanh -->
-                <div class="footer-col footer-links">
-                    <h3>Liên Kết Nhanh</h3>
-                    <ul>
-                        <li><a href="#y-nghia">Ý Nghĩa Chiến Dịch</a></li>
-                        <li><a href="#muc-tieu">Mục Tiêu Cuộc Thi</a></li>
-                        <li><a href="#cach-tham-gia">Cách Tham Gia</a></li>
-                        <li><a href="#bai-du-thi">Bài Dự Thi Nổi Bật</a></li>
-                    </ul>
-                </div>
+            const targetId = this.getAttribute('href'); // lấy id mục tiêu từ thẻ a
+            const targetElement = document.querySelector(targetId); // chọn phần tử có id tương ứng
 
-                <!-- Thông tin liên hệ -->
-                <div class="footer-col footer-contact">
-                    <h3>Thông Tin Liên Hệ</h3>
-                    <div class="contact-info">
-                        <div class="contact-item">
-                            <i class="fas fa-map-marker-alt"></i>
-                            <span>613 ÂU CƠ, PHƯỜNG PHÚ TRUNG, TP.HCM</span>
-                        </div>
-                        <div class="contact-item">
-                            <i class="fas fa-phone"></i>
-                            <span>+84 123 456 789</span>
-                        </div>
-                        <div class="contact-item">
-                            <i class="fas fa-envelope"></i>
-                            <span>info@hanhtrinhquehuong.vn</span>
-                        </div>
-                    </div>
-                </div>
+            if (targetElement) {
+                // Tính toán vị trí cuộn (có bù trừ chiều cao của header)
+                const headerOffset = header.offsetHeight;
+                const elementPosition = targetElement.getBoundingClientRect().top + window.pageYOffset;
+                const offsetPosition = elementPosition - headerOffset - 20; // trừ thêm 20px để tạo khoảng cách
 
-                <!-- Mạng xã hội và CTA -->
-                <div class="footer-col footer-social-cta">
-                    <h3>Kết Nối Với Chúng Tôi</h3>
-                    <div class="social-links">
-                        <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
-                        <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
-                        <a href="#" aria-label="TikTok"><i class="fab fa-tiktok"></i></a>
-                        <a href="#" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
-                    </div>
-                    <a href="#dang-ky" class="btn btn-primary footer-cta-btn">Đăng Ký Ngay</a>
-                </div>
-            </div>
+                window.scrollTo({
+                    top: offsetPosition,
+                    behavior: 'smooth' // cuộn mượt
+                });
 
-            <!-- Copyright -->
-            <div class="footer-bottom">
-                <div class="footer-divider"></div>
-                <p class="copyright">&copy; 2023 Hành Trình Quê Hương. All rights reserved.</p>
-            </div>
-        </div>
-    </footer>
+                // Đóng menu mobile nếu đang mở
+                const mainNav = document.querySelector('.main-nav');
+                const menuToggle = document.querySelector('.menu-toggle');
+                if (mainNav.classList.contains('active')) {
+                    mainNav.classList.remove('active');
+                    menuToggle.classList.remove('active');
+                }
+            }
+        });
+    });
 
-    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
-    <script src="js/script.js"></script>
-</body>
+    // ===== XỬ LÝ MENU MOBILE =====
+    const menuToggle = document.querySelector('.menu-toggle');
+    const mainNav = document.querySelector('.main-nav');
 
-</html>
+    menuToggle.addEventListener('click', () => {
+        mainNav.classList.toggle('active');
+        menuToggle.classList.toggle('active');
+    });
+
+    // Tự động đóng menu mobile khi click ra ngoài
+    document.addEventListener('click', (event) => {
+        if (!mainNav.contains(event.target) && !menuToggle.contains(event.target) && mainNav.classList.contains('active')) {
+            mainNav.classList.remove('active');
+            menuToggle.classList.remove('active');
+        }
+    });
+
+    // ===== XỬ LÝ VIDEO VÀ ÂM THANH =====
+    const soundToggle = document.getElementById('soundToggle');
+    const soundIcon = soundToggle.querySelector('i');
+
+    // Xử lý nút bật/tắt âm thanh cho YouTube
+    soundToggle.addEventListener('click', function () {
+        if (!youtubePlayer || !isYouTubeAPIReady || typeof youtubePlayer.isMuted !== 'function') {
+            console.warn('⚠️ YouTube player chưa sẵn sàng');
+            return;
+        }
+        
+        try {
+            const currentlyMuted = youtubePlayer.isMuted();
+            
+            if (currentlyMuted) {
+                // Bật âm thanh YouTube
+                youtubePlayer.unMute();
+                youtubePlayer.setVolume(50);
+                isYoutubeMuted = false;
+                soundIcon.className = 'fas fa-volume-up';
+                soundToggle.classList.add('unmuted');
+                soundToggle.setAttribute('aria-label', 'Tắt âm thanh');
+                console.log('🔊 Đã bật âm thanh YouTube');
+            } else {
+                // Tắt âm thanh YouTube
+                youtubePlayer.mute();
+                isYoutubeMuted = true;
+                soundIcon.className = 'fas fa-volume-mute';
+                soundToggle.classList.remove('unmuted');
+                soundToggle.setAttribute('aria-label', 'Bật âm thanh');
+                console.log('🔇 Đã tắt âm thanh YouTube');
+            }
+        } catch (error) {
+            console.error('❌ Lỗi khi thay đổi âm thanh:', error);
+        }
+    });
+
+    // Tạm dừng YouTube video khi không trong viewport để tiết kiệm băng thông
+    const videoObserverOptions = {
+        threshold: 0.5 // Video phải hiển thị ít nhất 50% để tiếp tục phát
+    };
+
+    const videoObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (!youtubePlayer || !isYouTubeAPIReady || typeof youtubePlayer.playVideo !== 'function') return;
+            
+            try {
+                if (entry.isIntersecting) {
+                    // YouTube video trong viewport - tiếp tục phát
+                    const currentSlide = heroSwiper.slides[heroSwiper.activeIndex];
+                    if (currentSlide && currentSlide.classList.contains('video-slide')) {
+                        youtubePlayer.playVideo();
+                        console.log('▶️ YouTube video tiếp tục phát (trong viewport)');
+                    }
+                } else {
+                    // YouTube video ngoài viewport - tạm dừng
+                    youtubePlayer.pauseVideo();
+                    console.log('⏸️ YouTube video tạm dừng (ngoài viewport)');
+                }
+            } catch (error) {
+                console.error('❌ Lỗi khi điều khiển video:', error);
+            }
+        });
+    }, videoObserverOptions);
+
+    // Bắt đầu theo dõi hero section
+    videoObserver.observe(heroSection);
+
+    // ===== ERROR HANDLING VÀ FALLBACK =====
+    // Xử lý lỗi global để tránh crash
+    window.addEventListener('error', function(event) {
+        if (event.message && event.message.includes('YouTube')) {
+            console.warn('⚠️ Lỗi liên quan đến YouTube:', event.message);
+            event.preventDefault();
+        }
+    });
+    
+    // Xử lý unhandled promise rejection
+    window.addEventListener('unhandledrejection', function(event) {
+        if (event.reason && event.reason.toString().includes('YouTube')) {
+            console.warn('⚠️ Promise rejection liên quan đến YouTube:', event.reason);
+            event.preventDefault();
+        }
+    });
+
+    // ===== XỬ LÝ RESPONSIVE CHO SLIDESHOW =====
+    // Điều chỉnh autoplay delay dựa trên kích thước màn hình
+    function adjustSlideshowForDevice() {
+        const isMobile = window.innerWidth <= 768;
+
+        if (isMobile) {
+            // Trên mobile: tăng thời gian autoplay để người dùng có thể đọc nội dung
+            heroSwiper.autoplay.delay = 7000;
+        } else {
+            // Trên desktop: thời gian autoplay bình thường
+            heroSwiper.autoplay.delay = 5000;
+        }
+    }
+
+    // Gọi hàm khi tải trang
+    adjustSlideshowForDevice();
+
+    // Gọi hàm khi thay đổi kích thước màn hình
+    window.addEventListener('resize', adjustSlideshowForDevice);
+
+    // ===== ACCESSIBILITY IMPROVEMENTS =====
+    // Thêm keyboard navigation cho slideshow
+    document.addEventListener('keydown', function (e) {
+        // Chỉ hoạt động khi slideshow đang trong viewport
+        const heroRect = heroSection.getBoundingClientRect();
+        const isHeroVisible = heroRect.top < window.innerHeight && heroRect.bottom > 0;
+
+        if (isHeroVisible) {
+            switch (e.key) {
+                case 'ArrowLeft':
+                    e.preventDefault();
+                    heroSwiper.slidePrev();
+                    break;
+                case 'ArrowRight':
+                    e.preventDefault();
+                    heroSwiper.slideNext();
+                    break;
+                case ' ': // Spacebar
+                    e.preventDefault();
+                    const currentSlide = heroSwiper.slides[heroSwiper.activeIndex];
+                    // Chỉ toggle autoplay nếu đang ở slide hình ảnh
+                    if (currentSlide && !currentSlide.classList.contains('video-slide')) {
+                        if (heroSwiper.autoplay.running) {
+                            heroSwiper.autoplay.stop();
+                        } else {
+                            heroSwiper.autoplay.start();
+                        }
+                    }
+                    break;
+            }
+        }
+    });
+
+    // ===== PERFORMANCE OPTIMIZATION =====
+    // Lazy load images trong các slide không active
+    const slideImages = document.querySelectorAll('.hero-slide img');
+    slideImages.forEach(img => {
+        if (img.dataset.src) {
+            img.src = img.dataset.src;
+        }
+    });
+
+    console.log('🎉 Hero Slideshow với Video và Hình ảnh đã được khởi tạo thành công!');
+    console.log('📋 Quy tắc autoplay:');
+    console.log('   🎥 Slide video: KHÔNG tự động chuyển');
+    console.log('   🖼️ Slide hình ảnh: TỰ ĐỘNG chuyển sau 5-7 giây');
+
+    // ===== COUNTER ANIMATION CHO STATISTICS =====
+    function animateCounter(element, start, end, duration, suffix = '') {
+        let startTimestamp = null;
+        const step = (timestamp) => {
+            if (!startTimestamp) startTimestamp = timestamp;
+            const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+            
+            // Sử dụng easing function để tạo hiệu ứng mượt mà
+            const easeOutQuart = 1 - Math.pow(1 - progress, 4);
+            const current = Math.floor(easeOutQuart * (end - start) + start);
+            
+            element.textContent = current.toLocaleString('vi-VN') + suffix;
+            
+            if (progress < 1) {
+                window.requestAnimationFrame(step);
+            } else {
+                element.textContent = end.toLocaleString('vi-VN') + suffix;
+            }
+        };
+        window.requestAnimationFrame(step);
+    }
+
+    // Khởi tạo Intersection Observer cho Statistics
+    const statsSection = document.querySelector('.community-stats');
+    if (statsSection) {
+        const statsObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    // Lấy tất cả các số cần animate
+                    const statNumbers = entry.target.querySelectorAll('.stat-number');
+                    
+                    statNumbers.forEach((statNumber, index) => {
+                        const text = statNumber.textContent;
+                        let targetNumber;
+                        let suffix = '';
+                        
+                        // Xử lý các loại số khác nhau
+                        if (text.includes('%')) {
+                            targetNumber = parseInt(text.replace('%', ''));
+                            suffix = '%';
+                        } else if (text.includes('+')) {
+                            targetNumber = parseInt(text.replace(/[+,]/g, ''));
+                            suffix = '+';
+                        } else {
+                            targetNumber = parseInt(text.replace(/[,]/g, ''));
+                        }
+                        
+                        // Delay khác nhau cho mỗi counter để tạo hiệu ứng cascade
+                        setTimeout(() => {
+                            animateCounter(statNumber, 0, targetNumber, 2000, suffix);
+                            // Thêm class để kích hoạt hiệu ứng underline
+                            statNumber.closest('.stat-item').classList.add('animated');
+                        }, index * 200);
+                    });
+                    
+                    // Chỉ chạy animation một lần
+                    statsObserver.unobserve(entry.target);
+                }
+            });
+        }, {
+            threshold: 0.5, // Kích hoạt khi 50% section hiển thị
+            rootMargin: '0px 0px -100px 0px' // Offset để animation kích hoạt sớm hơn
+        });
+
+        statsObserver.observe(statsSection);
+    }
+});
