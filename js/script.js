@@ -2,80 +2,30 @@
 let youtubePlayer;
 let isYoutubeMuted = true;
 let isYouTubeAPIReady = false;
-let youtubeAPILoadAttempts = 0;
-const MAX_API_LOAD_ATTEMPTS = 3;
 
 // Load YouTube API
 function loadYouTubeAPI() {
-    youtubeAPILoadAttempts++;
-    
     // Kiểm tra nếu API đã được load
     if (window.YT && window.YT.Player) {
-        console.log('✅ YouTube API đã có sẵn');
         onYouTubeIframeAPIReady();
         return;
     }
     
-    // Kiểm tra số lần thử
-    if (youtubeAPILoadAttempts > MAX_API_LOAD_ATTEMPTS) {
-        console.error('❌ Đã thử tải YouTube API quá nhiều lần, sử dụng fallback');
-        useFallbackBackground();
-        return;
-    }
-    
-    console.log(`🔄 Đang tải YouTube API (lần thử ${youtubeAPILoadAttempts})`);
-    
-    // Xóa script cũ nếu có
-    const existingScript = document.querySelector('script[src*="youtube.com/iframe_api"]');
-    if (existingScript) {
-        existingScript.remove();
-    }
-    
     const tag = document.createElement('script');
     tag.src = 'https://www.youtube.com/iframe_api';
-    tag.async = true;
-    tag.defer = true;
-    
-    // Xử lý lỗi khi load script
-    tag.onerror = function() {
-        console.error('❌ Không thể tải YouTube API script');
-        if (youtubeAPILoadAttempts < MAX_API_LOAD_ATTEMPTS) {
-            setTimeout(() => loadYouTubeAPI(), 2000);
-        } else {
-            useFallbackBackground();
-        }
-    };
-    
     const firstScriptTag = document.getElementsByTagName('script')[0];
     firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
     
-    // Fallback nếu API không load được sau 8 giây
+    // Fallback nếu API không load được sau 10 giây
     setTimeout(() => {
         if (!isYouTubeAPIReady) {
-            console.warn('⚠️ YouTube API timeout, thử lại...');
-            if (youtubeAPILoadAttempts < MAX_API_LOAD_ATTEMPTS) {
-                loadYouTubeAPI();
-            } else {
-                useFallbackBackground();
+            console.error('❌ YouTube API không load được, sử dụng fallback');
+            const videoSlide = document.querySelector('.video-slide');
+            if (videoSlide) {
+                videoSlide.style.background = 'linear-gradient(135deg, #007bff 0%, #0056b3 100%)';
             }
         }
-    }, 8000);
-}
-
-// Fallback background khi YouTube không load được
-function useFallbackBackground() {
-    console.log('🎨 Sử dụng fallback background');
-    const videoSlide = document.querySelector('.video-slide');
-    const soundToggle = document.getElementById('soundToggle');
-    
-    if (videoSlide) {
-        videoSlide.style.background = 'linear-gradient(135deg, #007bff 0%, #0056b3 100%)';
-        videoSlide.classList.add('fallback-background');
-    }
-    
-    if (soundToggle) {
-        soundToggle.style.display = 'none';
-    }
+    }, 10000);
 }
 
 // YouTube API ready callback
@@ -83,155 +33,83 @@ window.onYouTubeIframeAPIReady = function() {
     isYouTubeAPIReady = true;
     console.log('✅ YouTube API đã sẵn sàng');
     
-    try {
-        initializeYouTubePlayer();
-    } catch (error) {
-        console.error('❌ Lỗi khi khởi tạo YouTube player:', error);
-        useFallbackBackground();
-    }
-};
-
-// Khởi tạo YouTube Player
-function initializeYouTubePlayer() {
-    const playerElement = document.getElementById('youtube-player');
-    if (!playerElement) {
-        console.error('❌ Không tìm thấy element youtube-player');
-        useFallbackBackground();
-        return;
-    }
-    
-    console.log('🎬 Đang khởi tạo YouTube player...');
-    
-    try {
-        youtubePlayer = new YT.Player('youtube-player', {
-            height: '100%',
-            width: '100%',
-            videoId: 'NSnkb1IAjbE',
-            host: 'https://www.youtube-nocookie.com', // Sử dụng nocookie domain
-            playerVars: {
-                autoplay: 1,        // Tự động phát
-                mute: 1,           // Tắt âm mặc định
-                loop: 1,           // Phát lặp
-                playlist: 'NSnkb1IAjbE', // Cần thiết cho loop
-                controls: 0,       // Ẩn điều khiển
-                showinfo: 0,       // Ẩn thông tin video
-                modestbranding: 1, // Ẩn logo YouTube
-                iv_load_policy: 3, // Ẩn annotations
-                cc_load_policy: 0, // Ẩn phụ đề
-                playsinline: 1,    // Phát inline trên mobile
-                disablekb: 1,      // Tắt keyboard controls
-                fs: 0,             // Tắt fullscreen
-                rel: 0,            // Không hiện video liên quan
-                enablejsapi: 1,    // Bật JavaScript API
-                origin: window.location.origin,
-                wmode: 'opaque',   // Đảm bảo video hiển thị đúng
-                start: 0,          // Bắt đầu từ giây 0
-                end: 0,            // Không giới hạn thời gian kết thúc
-                quality: 'hd1080'  // Chất lượng cao
+    youtubePlayer = new YT.Player('youtube-player', {
+        height: '100%',
+        width: '100%',
+        videoId: 'NSnkb1IAjbE',
+        playerVars: {
+            autoplay: 1,        // Tự động phát
+            mute: 1,           // Tắt âm mặc định
+            loop: 1,           // Phát lặp
+            playlist: 'NSnkb1IAjbE', // Cần thiết cho loop
+            controls: 0,       // Ẩn điều khiển
+            showinfo: 0,       // Ẩn thông tin video
+            modestbranding: 1, // Ẩn logo YouTube
+            iv_load_policy: 3, // Ẩn annotations
+            cc_load_policy: 0, // Ẩn phụ đề
+            playsinline: 1,    // Phát inline trên mobile
+            disablekb: 1,      // Tắt keyboard controls
+            fs: 0,             // Tắt fullscreen
+            rel: 0,            // Không hiện video liên quan
+            enablejsapi: 1,    // Bật JavaScript API
+            origin: window.location.origin,
+            wmode: 'opaque'    // Đảm bảo video hiển thị đúng
+        },
+        events: {
+            onReady: function(event) {
+                console.log('🎬 YouTube player đã sẵn sàng');
+                try {
+                    event.target.setPlaybackQuality('hd1080');
+                    event.target.playVideo();
+                    console.log('▶️ Bắt đầu phát video');
+                } catch (error) {
+                    console.error('❌ Lỗi khi phát video:', error);
+                }
             },
-            events: {
-                onReady: onPlayerReady,
-                onStateChange: onPlayerStateChange,
-                onError: onPlayerError
-            }
-        });
-    } catch (error) {
-        console.error('❌ Lỗi khi tạo YouTube player:', error);
-        useFallbackBackground();
-    }
-}
-
-// Xử lý khi player sẵn sàng
-function onPlayerReady(event) {
-    console.log('🎬 YouTube player đã sẵn sàng');
-    
-    try {
-        // Set chất lượng video cao nhất
-        const availableQualities = event.target.getAvailableQualityLevels();
-        console.log('📺 Chất lượng có sẵn:', availableQualities);
-        
-        if (availableQualities.includes('hd1080')) {
-            event.target.setPlaybackQuality('hd1080');
-        } else if (availableQualities.includes('hd720')) {
-            event.target.setPlaybackQuality('hd720');
-        } else if (availableQualities.includes('large')) {
-            event.target.setPlaybackQuality('large');
-        }
-        
-        // Bắt đầu phát video
-        event.target.playVideo();
-        console.log('▶️ Bắt đầu phát video');
-        
-        // Đảm bảo video được mute
-        event.target.mute();
-        isYoutubeMuted = true;
-        
-    } catch (error) {
-        console.error('❌ Lỗi khi cấu hình player:', error);
-        useFallbackBackground();
-    }
-}
-
-// Xử lý thay đổi trạng thái player
-function onPlayerStateChange(event) {
-    const states = {
-        '-1': 'UNSTARTED',
-        '0': 'ENDED',
-        '1': 'PLAYING',
-        '2': 'PAUSED',
-        '3': 'BUFFERING',
-        '5': 'CUED'
-    };
-    
-    console.log('🔄 Trạng thái video:', states[event.data] || event.data);
-    
-    try {
-        // Đảm bảo video luôn phát lặp
-        if (event.data === YT.PlayerState.ENDED) {
-            setTimeout(() => {
-                if (youtubePlayer && typeof youtubePlayer.playVideo === 'function') {
-                    youtubePlayer.playVideo();
+            onStateChange: function(event) {
+                console.log('🔄 Trạng thái video thay đổi:', event.data);
+                // Đảm bảo video luôn phát lặp
+                if (event.data === YT.PlayerState.ENDED) {
+                    event.target.playVideo();
                     console.log('🔄 Video kết thúc, phát lại');
                 }
-            }, 100);
+            },
+            onError: function(event) {
+                console.error('❌ Lỗi YouTube player:', event.data);
+                let errorMessage = '';
+                switch(event.data) {
+                    case 2:
+                        errorMessage = 'Video ID không hợp lệ';
+                        break;
+                    case 5:
+                        errorMessage = 'Video không thể phát trên HTML5 player';
+                        break;
+                    case 100:
+                        errorMessage = 'Video không tìm thấy hoặc bị xóa';
+                        break;
+                    case 101:
+                    case 150:
+                        errorMessage = 'Video không cho phép nhúng';
+                        break;
+                    default:
+                        errorMessage = 'Lỗi không xác định';
+                }
+                console.error('Chi tiết lỗi:', errorMessage);
+                
+                // Fallback: sử dụng background gradient
+                const videoSlide = document.querySelector('.video-slide');
+                if (videoSlide) {
+                    videoSlide.style.background = 'linear-gradient(135deg, #007bff 0%, #0056b3 100%)';
+                    // Ẩn nút sound toggle nếu video lỗi
+                    const soundToggle = document.getElementById('soundToggle');
+                    if (soundToggle) {
+                        soundToggle.style.display = 'none';
+                    }
+                }
+            }
         }
-        
-        // Đảm bảo video được mute khi bắt đầu phát
-        if (event.data === YT.PlayerState.PLAYING && isYoutubeMuted) {
-            event.target.mute();
-        }
-        
-    } catch (error) {
-        console.error('❌ Lỗi khi xử lý thay đổi trạng thái:', error);
-    }
-}
-
-// Xử lý lỗi player
-function onPlayerError(event) {
-    console.error('❌ Lỗi YouTube player:', event.data);
-    
-    const errorMessages = {
-        2: 'Video ID không hợp lệ hoặc tham số không đúng',
-        5: 'Video không thể phát trên HTML5 player',
-        100: 'Video không tìm thấy hoặc bị xóa',
-        101: 'Video không cho phép nhúng',
-        150: 'Video không cho phép nhúng (giống 101)'
-    };
-    
-    const errorMessage = errorMessages[event.data] || `Lỗi không xác định (${event.data})`;
-    console.error('Chi tiết lỗi:', errorMessage);
-    
-    // Thử video khác hoặc sử dụng fallback
-    if (event.data === 100 || event.data === 101 || event.data === 150) {
-        console.log('🔄 Thử sử dụng video ID khác...');
-        // Có thể thử video ID khác ở đây
-        setTimeout(() => {
-            useFallbackBackground();
-        }, 1000);
-    } else {
-        useFallbackBackground();
-    }
-}
+    });
+};
 
 // Khởi tạo thư viện AOS (Animate On Scroll)
 document.addEventListener('DOMContentLoaded', function () {
@@ -435,15 +313,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Xử lý nút bật/tắt âm thanh cho YouTube
     soundToggle.addEventListener('click', function () {
-        if (!youtubePlayer || !isYouTubeAPIReady || typeof youtubePlayer.isMuted !== 'function') {
+        if (!youtubePlayer || typeof youtubePlayer.isMuted !== 'function') {
             console.warn('⚠️ YouTube player chưa sẵn sàng');
             return;
         }
         
         try {
-            const currentlyMuted = youtubePlayer.isMuted();
-            
-            if (currentlyMuted) {
+            if (isYoutubeMuted) {
                 // Bật âm thanh YouTube
                 youtubePlayer.unMute();
                 youtubePlayer.setVolume(50);
@@ -473,7 +349,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const videoObserver = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
-            if (!youtubePlayer || !isYouTubeAPIReady || typeof youtubePlayer.playVideo !== 'function') return;
+            if (!youtubePlayer || typeof youtubePlayer.playVideo !== 'function') return;
             
             try {
                 if (entry.isIntersecting) {
@@ -496,23 +372,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Bắt đầu theo dõi hero section
     videoObserver.observe(heroSection);
-
-    // ===== ERROR HANDLING VÀ FALLBACK =====
-    // Xử lý lỗi global để tránh crash
-    window.addEventListener('error', function(event) {
-        if (event.message && event.message.includes('YouTube')) {
-            console.warn('⚠️ Lỗi liên quan đến YouTube:', event.message);
-            event.preventDefault();
-        }
-    });
-    
-    // Xử lý unhandled promise rejection
-    window.addEventListener('unhandledrejection', function(event) {
-        if (event.reason && event.reason.toString().includes('YouTube')) {
-            console.warn('⚠️ Promise rejection liên quan đến YouTube:', event.reason);
-            event.preventDefault();
-        }
-    });
 
     // ===== XỬ LÝ RESPONSIVE CHO SLIDESHOW =====
     // Điều chỉnh autoplay delay dựa trên kích thước màn hình
