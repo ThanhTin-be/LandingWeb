@@ -1,19 +1,42 @@
 // ===== YOUTUBE API SETUP =====
 let youtubePlayer;
 let isYoutubeMuted = true;
+let isYouTubeAPIReady = false;
 
 // Load YouTube API
 function loadYouTubeAPI() {
+    // Kiểm tra nếu API đã được load
+    if (window.YT && window.YT.Player) {
+        onYouTubeIframeAPIReady();
+        return;
+    }
+    
     const tag = document.createElement('script');
     tag.src = 'https://www.youtube.com/iframe_api';
     const firstScriptTag = document.getElementsByTagName('script')[0];
     firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+    
+    // Fallback nếu API không load được sau 10 giây
+    setTimeout(() => {
+        if (!isYouTubeAPIReady) {
+            console.error('❌ YouTube API không load được, sử dụng fallback');
+            const videoSlide = document.querySelector('.video-slide');
+            if (videoSlide) {
+                videoSlide.style.background = 'linear-gradient(135deg, #007bff 0%, #0056b3 100%)';
+            }
+        }
+    }, 10000);
 }
 
 // YouTube API ready callback
 window.onYouTubeIframeAPIReady = function() {
+    isYouTubeAPIReady = true;
+    console.log('✅ YouTube API đã sẵn sàng');
+    
     youtubePlayer = new YT.Player('youtube-player', {
-        videoId: 'NSnkb1IAjbE', // Video ID từ link YouTube
+        height: '100%',
+        width: '100%',
+        videoId: 'NSnkb1IAjbE',
         playerVars: {
             autoplay: 1,        // Tự động phát
             mute: 1,           // Tắt âm mặc định
@@ -28,28 +51,60 @@ window.onYouTubeIframeAPIReady = function() {
             disablekb: 1,      // Tắt keyboard controls
             fs: 0,             // Tắt fullscreen
             rel: 0,            // Không hiện video liên quan
-            start: 0,          // Bắt đầu từ giây 0
             enablejsapi: 1,    // Bật JavaScript API
-            origin: window.location.origin
+            origin: window.location.origin,
+            wmode: 'opaque'    // Đảm bảo video hiển thị đúng
         },
         events: {
             onReady: function(event) {
-                event.target.setPlaybackQuality('hd1080'); // Chất lượng cao nhất
-                event.target.playVideo();
-                console.log('🎬 YouTube video đã sẵn sàng và bắt đầu phát');
+                console.log('🎬 YouTube player đã sẵn sàng');
+                try {
+                    event.target.setPlaybackQuality('hd1080');
+                    event.target.playVideo();
+                    console.log('▶️ Bắt đầu phát video');
+                } catch (error) {
+                    console.error('❌ Lỗi khi phát video:', error);
+                }
             },
             onStateChange: function(event) {
+                console.log('🔄 Trạng thái video thay đổi:', event.data);
                 // Đảm bảo video luôn phát lặp
                 if (event.data === YT.PlayerState.ENDED) {
                     event.target.playVideo();
+                    console.log('🔄 Video kết thúc, phát lại');
                 }
             },
             onError: function(event) {
                 console.error('❌ Lỗi YouTube player:', event.data);
-                // Fallback: hiển thị background gradient nếu video lỗi
+                let errorMessage = '';
+                switch(event.data) {
+                    case 2:
+                        errorMessage = 'Video ID không hợp lệ';
+                        break;
+                    case 5:
+                        errorMessage = 'Video không thể phát trên HTML5 player';
+                        break;
+                    case 100:
+                        errorMessage = 'Video không tìm thấy hoặc bị xóa';
+                        break;
+                    case 101:
+                    case 150:
+                        errorMessage = 'Video không cho phép nhúng';
+                        break;
+                    default:
+                        errorMessage = 'Lỗi không xác định';
+                }
+                console.error('Chi tiết lỗi:', errorMessage);
+                
+                // Fallback: sử dụng background gradient
                 const videoSlide = document.querySelector('.video-slide');
                 if (videoSlide) {
                     videoSlide.style.background = 'linear-gradient(135deg, #007bff 0%, #0056b3 100%)';
+                    // Ẩn nút sound toggle nếu video lỗi
+                    const soundToggle = document.getElementById('soundToggle');
+                    if (soundToggle) {
+                        soundToggle.style.display = 'none';
+                    }
                 }
             }
         }
@@ -126,10 +181,14 @@ document.addEventListener('DOMContentLoaded', function () {
                     }
 
                     // Đảm bảo YouTube video đang phát
-                    if (youtubePlayer && youtubePlayer.getPlayerState) {
-                        const state = youtubePlayer.getPlayerState();
-                        if (state !== YT.PlayerState.PLAYING) {
-                            youtubePlayer.playVideo();
+                    if (youtubePlayer && typeof youtubePlayer.getPlayerState === 'function') {
+                        try {
+                            const state = youtubePlayer.getPlayerState();
+                            if (state !== YT.PlayerState.PLAYING) {
+                                youtubePlayer.playVideo();
+                            }
+                        } catch (error) {
+                            console.error('❌ Lỗi khi kiểm tra trạng thái video:', error);
                         }
                     }
                 } else {
@@ -137,8 +196,12 @@ document.addEventListener('DOMContentLoaded', function () {
                     soundToggle.style.display = 'none';
 
                     // Tạm dừng YouTube video khi không ở slide video
-                    if (youtubePlayer && youtubePlayer.pauseVideo) {
-                        youtubePlayer.pauseVideo();
+                    if (youtubePlayer && typeof youtubePlayer.pauseVideo === 'function') {
+                        try {
+                            youtubePlayer.pauseVideo();
+                        } catch (error) {
+                            console.error('❌ Lỗi khi tạm dừng video:', error);
+                        }
                     }
 
                     // ✅ BẬT AUTOPLAY khi ở slide hình ảnh
@@ -250,25 +313,32 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Xử lý nút bật/tắt âm thanh cho YouTube
     soundToggle.addEventListener('click', function () {
-        if (!youtubePlayer || !youtubePlayer.isMuted) return;
+        if (!youtubePlayer || typeof youtubePlayer.isMuted !== 'function') {
+            console.warn('⚠️ YouTube player chưa sẵn sàng');
+            return;
+        }
         
-        if (isYoutubeMuted) {
-            // Bật âm thanh YouTube
-            youtubePlayer.unMute();
-            youtubePlayer.setVolume(50); // Set volume to 50%
-            isYoutubeMuted = false;
-            soundIcon.className = 'fas fa-volume-up';
-            soundToggle.classList.add('unmuted');
-            soundToggle.setAttribute('aria-label', 'Tắt âm thanh');
-            console.log('🔊 Đã bật âm thanh YouTube');
-        } else {
-            // Tắt âm thanh YouTube
-            youtubePlayer.mute();
-            isYoutubeMuted = true;
-            soundIcon.className = 'fas fa-volume-mute';
-            soundToggle.classList.remove('unmuted');
-            soundToggle.setAttribute('aria-label', 'Bật âm thanh');
-            console.log('🔇 Đã tắt âm thanh YouTube');
+        try {
+            if (isYoutubeMuted) {
+                // Bật âm thanh YouTube
+                youtubePlayer.unMute();
+                youtubePlayer.setVolume(50);
+                isYoutubeMuted = false;
+                soundIcon.className = 'fas fa-volume-up';
+                soundToggle.classList.add('unmuted');
+                soundToggle.setAttribute('aria-label', 'Tắt âm thanh');
+                console.log('🔊 Đã bật âm thanh YouTube');
+            } else {
+                // Tắt âm thanh YouTube
+                youtubePlayer.mute();
+                isYoutubeMuted = true;
+                soundIcon.className = 'fas fa-volume-mute';
+                soundToggle.classList.remove('unmuted');
+                soundToggle.setAttribute('aria-label', 'Bật âm thanh');
+                console.log('🔇 Đã tắt âm thanh YouTube');
+            }
+        } catch (error) {
+            console.error('❌ Lỗi khi thay đổi âm thanh:', error);
         }
     });
 
@@ -279,19 +349,23 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const videoObserver = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
-            if (!youtubePlayer || !youtubePlayer.playVideo) return;
+            if (!youtubePlayer || typeof youtubePlayer.playVideo !== 'function') return;
             
-            if (entry.isIntersecting) {
-                // YouTube video trong viewport - tiếp tục phát
-                const currentSlide = heroSwiper.slides[heroSwiper.activeIndex];
-                if (currentSlide && currentSlide.classList.contains('video-slide')) {
-                    youtubePlayer.playVideo();
-                    console.log('▶️ YouTube video tiếp tục phát (trong viewport)');
+            try {
+                if (entry.isIntersecting) {
+                    // YouTube video trong viewport - tiếp tục phát
+                    const currentSlide = heroSwiper.slides[heroSwiper.activeIndex];
+                    if (currentSlide && currentSlide.classList.contains('video-slide')) {
+                        youtubePlayer.playVideo();
+                        console.log('▶️ YouTube video tiếp tục phát (trong viewport)');
+                    }
+                } else {
+                    // YouTube video ngoài viewport - tạm dừng
+                    youtubePlayer.pauseVideo();
+                    console.log('⏸️ YouTube video tạm dừng (ngoài viewport)');
                 }
-            } else {
-                // YouTube video ngoài viewport - tạm dừng
-                youtubePlayer.pauseVideo();
-                console.log('⏸️ YouTube video tạm dừng (ngoài viewport)');
+            } catch (error) {
+                console.error('❌ Lỗi khi điều khiển video:', error);
             }
         });
     }, videoObserverOptions);
