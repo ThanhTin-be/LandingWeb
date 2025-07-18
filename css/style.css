@@ -1,5 +1,5 @@
 /* Nhập font từ Google Fonts để sử dụng cho giao diện */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Merriweather:wght@400;700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Merriweather:wght@400;700&display=swap");
 
 /* Định nghĩa các biến CSS để tái sử dụng màu sắc và hiệu ứng */
 :root {
@@ -30,7 +30,7 @@ html {
 }
 
 body {
-    font-family: 'Inter', sans-serif;
+    font-family: "Inter", sans-serif;
     line-height: 1.6;
     color: var(--text-color);
     background-color: var(--white);
@@ -57,7 +57,7 @@ h1,
 h2,
 h3,
 h4 {
-    font-family: 'Merriweather', serif;
+    font-family: "Merriweather", serif;
     margin-bottom: 1rem;
     color: var(--text-color);
 }
@@ -92,7 +92,7 @@ p {
 }
 
 .section-title::after {
-    content: '';
+    content: "";
     position: absolute;
     left: 50%;
     bottom: 0;
@@ -133,16 +133,129 @@ p {
 }
 
 .btn-primary {
-    background: var(--primary-color);
+    background: linear-gradient(135deg, #007bff, #0056b3);
     color: var(--white);
     box-shadow: var(--shadow-light);
+    position: relative;
+    overflow: hidden;
+    border: none;
+    font-weight: 600;
+    text-align: center;
+    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    z-index: 1;
+}
+
+.btn-primary::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg,
+            rgba(255, 255, 255, 0.1) 0%,
+            rgba(255, 255, 255, 0.3) 50%,
+            rgba(255, 255, 255, 0.1) 100%);
+    transition: all 0.6s ease;
+    z-index: -1;
+}
+
+.btn-primary::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg,
+            #ff6b6b,
+            #4ecdc4,
+            #45b7d1,
+            #96ceb4,
+            #feca57);
+    background-size: 300% 300%;
+    opacity: 0;
+    transition: all 0.4s ease;
+    z-index: -1;
+    animation: gradient-shift 3s ease infinite;
 }
 
 .btn-primary:hover {
-    transform: translateY(-3px);
+    transform: translateY(-5px) scale(1.05);
     color: var(--white);
-    box-shadow: var(--shadow-medium);
-    background: #0e549f;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+    box-shadow:
+        0 15px 35px rgba(0, 123, 255, 0.4),
+        0 5px 15px rgba(0, 0, 0, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2),
+        0 0 30px rgba(0, 123, 255, 0.6);
+    border-radius: 60px;
+}
+
+.btn-primary:hover::before {
+    left: 100%;
+}
+
+.btn-primary:hover::after {
+    opacity: 1;
+}
+
+.btn-primary:active {
+    transform: translateY(-3px) scale(1.02);
+}
+
+/* Add pulsing animation for extra attention */
+.btn-primary {
+    animation: subtle-pulse 4s ease-in-out infinite;
+}
+
+.btn-primary:hover {
+    animation: none;
+}
+
+/* Add floating particles effect */
+.btn-primary:hover::before {
+    background:
+        radial-gradient(circle at 20% 80%,
+            rgba(255, 255, 255, 0.3) 0%,
+            transparent 50%),
+        radial-gradient(circle at 80% 20%,
+            rgba(255, 255, 255, 0.3) 0%,
+            transparent 50%),
+        radial-gradient(circle at 40% 40%,
+            rgba(255, 255, 255, 0.2) 0%,
+            transparent 50%),
+        linear-gradient(135deg,
+            rgba(255, 255, 255, 0.1) 0%,
+            rgba(255, 255, 255, 0.3) 50%,
+            rgba(255, 255, 255, 0.1) 100%);
+    animation: floating-sparkles 2s ease-in-out infinite;
+}
+
+@keyframes subtle-pulse {
+
+    0%,
+    100% {
+        box-shadow: var(--shadow-light);
+    }
+
+    50% {
+        box-shadow:
+            var(--shadow-light),
+            0 0 20px rgba(0, 123, 255, 0.3);
+    }
+}
+
+@keyframes floating-sparkles {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.7;
+    }
 }
 
 .btn-secondary {
@@ -200,7 +313,7 @@ p {
 }
 
 .main-header .logo a {
-    font-family: 'Merriweather', serif;
+    font-family: "Merriweather", serif;
     font-size: 1.8rem;
     font-weight: 700;
     color: var(--white);
@@ -229,7 +342,7 @@ p {
 }
 
 .main-nav a:not(.btn-nav)::after {
-    content: '';
+    content: "";
     position: absolute;
     width: 0;
     height: 2px;
@@ -522,7 +635,9 @@ p {
     border-radius: 15px;
     box-shadow: var(--shadow-light);
     text-align: center;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    transition:
+        transform 0.3s ease,
+        box-shadow 0.3s ease;
 }
 
 .meaning-card:hover {
@@ -558,7 +673,9 @@ p {
     padding: 25px;
     border-radius: 10px;
     box-shadow: var(--shadow-light);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    transition:
+        transform 0.3s ease,
+        box-shadow 0.3s ease;
     border-left: 5px solid var(--primary-color);
 }
 
@@ -593,7 +710,9 @@ p {
     text-align: center;
     position: relative;
     overflow: hidden;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    transition:
+        transform 0.3s ease,
+        box-shadow 0.3s ease;
 }
 
 .step-card:hover {
@@ -651,31 +770,32 @@ p {
 
 /* Icon placeholders */
 .icon-location::before {
-    content: '📍';
+    content: "📍";
 }
 
 .icon-food::before {
-    content: '🍜';
+    content: "🍜";
 }
 
 .icon-culture::before {
-    content: '🎭';
+    content: "🎭";
 }
 
 .icon-people::before {
-    content: '👨‍👩‍👧‍👦';
+    content: "👨‍👩‍👧‍👦";
 }
 
 .icon-heart::before {
-    content: '❤️';
+    content: "❤️";
 }
 
 /* ===== PARALLAX QUOTE SECTION ===== */
 .parallax-quote-section {
     position: relative;
     min-height: 400px;
-    background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)),
-        url('https://images.pexels.com/photos/2166711/pexels-photo-2166711.jpeg?auto=compress&cs=tinysrgb&w=1920&h=600&fit=crop');
+    background-image:
+        linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)),
+        url("https://images.pexels.com/photos/2166711/pexels-photo-2166711.jpeg?auto=compress&cs=tinysrgb&w=1920&h=600&fit=crop");
     background-size: cover;
     background-position: center;
     background-attachment: fixed;
@@ -693,7 +813,9 @@ p {
     left: 0;
     width: 100%;
     height: 100%;
-    background: linear-gradient(135deg, rgba(0, 123, 255, 0.4) 0%, rgba(0, 86, 179, 0.6) 100%);
+    background: linear-gradient(135deg,
+            rgba(0, 123, 255, 0.4) 0%,
+            rgba(0, 86, 179, 0.6) 100%);
     z-index: 1;
 }
 
@@ -709,7 +831,7 @@ p {
 }
 
 .quote-text {
-    font-family: 'Merriweather', serif;
+    font-family: "Merriweather", serif;
     font-size: 2.2rem;
     line-height: 1.4;
     margin-bottom: 2rem;
@@ -773,7 +895,9 @@ p {
     left: 0;
     width: 100%;
     height: 100%;
-    background: linear-gradient(135deg, rgba(0, 123, 255, 0.8) 0%, rgba(0, 86, 179, 0.9) 100%);
+    background: linear-gradient(135deg,
+            rgba(0, 123, 255, 0.8) 0%,
+            rgba(0, 86, 179, 0.9) 100%);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -818,13 +942,15 @@ p {
 }
 
 .submission-card .card-content::before {
-    content: '';
+    content: "";
     position: absolute;
     top: 0;
     left: 25px;
     right: 25px;
     height: 3px;
-    background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+    background: linear-gradient(90deg,
+            var(--primary-color),
+            var(--secondary-color));
     transform: scaleX(0);
     transition: transform 0.3s ease;
 }
@@ -908,7 +1034,9 @@ p {
     left: 20px;
     width: 40px;
     height: 40px;
-    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    background: linear-gradient(135deg,
+            var(--primary-color),
+            var(--secondary-color));
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -939,7 +1067,9 @@ p {
     width: 60px;
     height: 60px;
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    background: linear-gradient(135deg,
+            var(--primary-color),
+            var(--secondary-color));
     display: flex;
     align-items: center;
     justify-content: center;
@@ -953,7 +1083,7 @@ p {
     font-size: 1.1rem;
     color: var(--primary-color);
     margin-bottom: 5px;
-    font-family: 'Inter', sans-serif;
+    font-family: "Inter", sans-serif;
 }
 
 .author-info p {
@@ -976,7 +1106,9 @@ p {
 .community-stats {
     margin-top: 60px;
     padding: 40px;
-    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    background: linear-gradient(135deg,
+            var(--primary-color),
+            var(--secondary-color));
     border-radius: 20px;
     box-shadow: var(--shadow-medium);
 }
@@ -995,7 +1127,7 @@ p {
 .stat-number {
     font-size: 3rem;
     font-weight: 700;
-    font-family: 'Merriweather', serif;
+    font-family: "Merriweather", serif;
     margin-bottom: 10px;
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
     transition: all 0.3s ease;
@@ -1003,7 +1135,7 @@ p {
 }
 
 .stat-number::after {
-    content: '';
+    content: "";
     position: absolute;
     bottom: -5px;
     left: 50%;
@@ -1082,7 +1214,9 @@ p {
     background-color: rgba(255, 255, 255, 0.95);
     color: var(--text-color);
     font-size: 1rem;
-    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    transition:
+        border-color 0.3s ease,
+        box-shadow 0.3s ease;
 }
 
 .registration-form input[type="text"]::placeholder,
@@ -1112,7 +1246,7 @@ p {
 }
 
 .registration-form input[type="file"]::before {
-    content: 'Chọn tệp...';
+    content: "Chọn tệp...";
     display: inline-block;
     background: var(--primary-color);
     color: var(--white);
@@ -1174,7 +1308,7 @@ p {
 }
 
 .footer-info .logo a {
-    font-family: 'Merriweather', serif;
+    font-family: "Merriweather", serif;
     font-size: 1.8rem;
     font-weight: 700;
     color: var(--white);
@@ -1196,7 +1330,7 @@ p {
     color: var(--white);
     font-size: 1.2rem;
     margin-bottom: 20px;
-    font-family: 'Inter', sans-serif;
+    font-family: "Inter", sans-serif;
     font-weight: 600;
 }
 
@@ -1451,7 +1585,6 @@ p {
         text-align: center;
         padding: 12px 30px;
         color: var(--white) !important;
-
     }
 
     /* Footer mobile */
@@ -1586,5 +1719,20 @@ p {
 
     .contact-item {
         font-size: 0.9rem;
+    }
+}
+
+/* CTA Button Animation Keyframes */
+@keyframes gradient-shift {
+    0% {
+        background-position: 0% 50%;
+    }
+
+    50% {
+        background-position: 100% 50%;
+    }
+
+    100% {
+        background-position: 0% 50%;
     }
 }
