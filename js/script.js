@@ -10,12 +10,12 @@ function loadYouTubeAPI() {
         onYouTubeIframeAPIReady();
         return;
     }
-    
+
     const tag = document.createElement('script');
     tag.src = 'https://www.youtube.com/iframe_api';
     const firstScriptTag = document.getElementsByTagName('script')[0];
     firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-    
+
     // Fallback nếu API không load được sau 10 giây
     setTimeout(() => {
         if (!isYouTubeAPIReady) {
@@ -29,19 +29,19 @@ function loadYouTubeAPI() {
 }
 
 // YouTube API ready callback
-window.onYouTubeIframeAPIReady = function() {
+window.onYouTubeIframeAPIReady = function () {
     isYouTubeAPIReady = true;
     console.log('✅ YouTube API đã sẵn sàng');
-    
+
     youtubePlayer = new YT.Player('youtube-player', {
         height: '100%',
         width: '100%',
-        videoId: 'NSnkb1IAjbE',
+        videoId: 'SJws76hIqxw',
         playerVars: {
             autoplay: 1,        // Tự động phát
             mute: 1,           // Tắt âm mặc định
             loop: 1,           // Phát lặp
-            playlist: 'NSnkb1IAjbE', // Cần thiết cho loop
+            playlist: 'SJws76hIqxw', // Cần thiết cho loop
             controls: 0,       // Ẩn điều khiển
             showinfo: 0,       // Ẩn thông tin video
             modestbranding: 1, // Ẩn logo YouTube
@@ -56,7 +56,7 @@ window.onYouTubeIframeAPIReady = function() {
             wmode: 'opaque'    // Đảm bảo video hiển thị đúng
         },
         events: {
-            onReady: function(event) {
+            onReady: function (event) {
                 console.log('🎬 YouTube player đã sẵn sàng');
                 try {
                     event.target.setPlaybackQuality('hd1080');
@@ -66,7 +66,7 @@ window.onYouTubeIframeAPIReady = function() {
                     console.error('❌ Lỗi khi phát video:', error);
                 }
             },
-            onStateChange: function(event) {
+            onStateChange: function (event) {
                 console.log('🔄 Trạng thái video thay đổi:', event.data);
                 // Đảm bảo video luôn phát lặp
                 if (event.data === YT.PlayerState.ENDED) {
@@ -74,10 +74,10 @@ window.onYouTubeIframeAPIReady = function() {
                     console.log('🔄 Video kết thúc, phát lại');
                 }
             },
-            onError: function(event) {
+            onError: function (event) {
                 console.error('❌ Lỗi YouTube player:', event.data);
                 let errorMessage = '';
-                switch(event.data) {
+                switch (event.data) {
                     case 2:
                         errorMessage = 'Video ID không hợp lệ';
                         break;
@@ -95,7 +95,7 @@ window.onYouTubeIframeAPIReady = function() {
                         errorMessage = 'Lỗi không xác định';
                 }
                 console.error('Chi tiết lỗi:', errorMessage);
-                
+
                 // Fallback: sử dụng background gradient
                 const videoSlide = document.querySelector('.video-slide');
                 if (videoSlide) {
@@ -115,7 +115,7 @@ window.onYouTubeIframeAPIReady = function() {
 document.addEventListener('DOMContentLoaded', function () {
     // Load YouTube API
     loadYouTubeAPI();
-    
+
     AOS.init({
         duration: 1000, // thời gian chạy hiệu ứng (từ 0 đến 3000ms, bước nhảy 50ms)
         easing: 'ease-in-out', // kiểu chuyển động mặc định cho các hiệu ứng AOS
@@ -317,7 +317,7 @@ document.addEventListener('DOMContentLoaded', function () {
             console.warn('⚠️ YouTube player chưa sẵn sàng');
             return;
         }
-        
+
         try {
             if (isYoutubeMuted) {
                 // Bật âm thanh YouTube
@@ -350,7 +350,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const videoObserver = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (!youtubePlayer || typeof youtubePlayer.playVideo !== 'function') return;
-            
+
             try {
                 if (entry.isIntersecting) {
                     // YouTube video trong viewport - tiếp tục phát
@@ -446,13 +446,13 @@ document.addEventListener('DOMContentLoaded', function () {
         const step = (timestamp) => {
             if (!startTimestamp) startTimestamp = timestamp;
             const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-            
+
             // Sử dụng easing function để tạo hiệu ứng mượt mà
             const easeOutQuart = 1 - Math.pow(1 - progress, 4);
             const current = Math.floor(easeOutQuart * (end - start) + start);
-            
+
             element.textContent = current.toLocaleString('vi-VN') + suffix;
-            
+
             if (progress < 1) {
                 window.requestAnimationFrame(step);
             } else {
@@ -470,12 +470,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (entry.isIntersecting) {
                     // Lấy tất cả các số cần animate
                     const statNumbers = entry.target.querySelectorAll('.stat-number');
-                    
+
                     statNumbers.forEach((statNumber, index) => {
                         const text = statNumber.textContent;
                         let targetNumber;
                         let suffix = '';
-                        
+
                         // Xử lý các loại số khác nhau
                         if (text.includes('%')) {
                             targetNumber = parseInt(text.replace('%', ''));
@@ -486,7 +486,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         } else {
                             targetNumber = parseInt(text.replace(/[,]/g, ''));
                         }
-                        
+
                         // Delay khác nhau cho mỗi counter để tạo hiệu ứng cascade
                         setTimeout(() => {
                             animateCounter(statNumber, 0, targetNumber, 2000, suffix);
@@ -494,7 +494,7 @@ document.addEventListener('DOMContentLoaded', function () {
                             statNumber.closest('.stat-item').classList.add('animated');
                         }, index * 200);
                     });
-                    
+
                     // Chỉ chạy animation một lần
                     statsObserver.unobserve(entry.target);
                 }
