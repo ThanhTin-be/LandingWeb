@@ -506,4 +506,55 @@ document.addEventListener('DOMContentLoaded', function () {
 
         statsObserver.observe(statsSection);
     }
+
+    // ===== JARALLAX PARALLAX INITIALIZATION =====
+    // Khởi tạo Jarallax sau khi DOM loaded
+    if (typeof jarallax !== 'undefined') {
+        // Khởi tạo Jarallax cho parallax quote section
+        jarallax(document.querySelectorAll('.jarallax'), {
+            speed: 0.5,
+            imgSrc:
+                'https://images.pexels.com/photos/2166711/pexels-photo-2166711.jpeg?auto=compress&cs=tinysrgb&w=1920&h=600&fit=crop',
+            imgSize: 'cover',
+            imgPosition: '50% 50%',
+            type: 'scroll', // scroll, scale, opacity, scroll-opacity, scale-opacity
+            noAndroid: false,
+            noIos: false,
+        });
+
+        console.log('✅ Jarallax parallax effect đã được khởi tạo thành công!');
+    } else {
+        console.warn('⚠️ Jarallax library chưa được load');
+    }
+
+    // ===== EMOTIONS SLIDER INITIALIZATION =====
+    // Khởi tạo Swiper cho emotions slider
+    const emotionsSwiper = new Swiper('.emotions-swiper', {
+        slidesPerView: 1,
+        spaceBetween: 30,
+        loop: true,
+        autoplay: {
+            delay: 5000,
+            disableOnInteraction: false,
+        },
+        navigation: {
+            nextEl: '.emotions-slider-next',
+            prevEl: '.emotions-slider-prev',
+        },
+        breakpoints: {
+            768: {
+                slidesPerView: 2,
+                spaceBetween: 30,
+            },
+            1024: {
+                slidesPerView: 3,
+                spaceBetween: 30,
+            },
+        },
+        on: {
+            init: function () {
+                console.log('✅ Emotions slider đã được khởi tạo thành công!');
+            },
+        },
+    });
 });

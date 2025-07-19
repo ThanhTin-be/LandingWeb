@@ -792,19 +792,62 @@ p {
 /* ===== PARALLAX QUOTE SECTION ===== */
 .parallax-quote-section {
     position: relative;
-    min-height: 400px;
-    background-image:
-        linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)),
-        url("https://images.pexels.com/photos/2166711/pexels-photo-2166711.jpeg?auto=compress&cs=tinysrgb&w=1920&h=600&fit=crop");
-    background-size: cover;
-    background-position: center;
-    background-attachment: fixed;
+    min-height: 500px;
     display: flex;
     align-items: center;
     justify-content: center;
     text-align: center;
     color: var(--white);
     overflow: hidden;
+}
+
+/* Jarallax specific styles */
+.parallax-quote-section.jarallax {
+    background: none;
+}
+
+.jarallax-img {
+    position: absolute;
+    object-fit: cover;
+    font-family: "object-fit: cover;";
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    transition: transform 0.1s ease-out;
+    will-change: transform;
+}
+
+/* Enhanced Jarallax Performance */
+.jarallax {
+    position: relative;
+    z-index: 0;
+    will-change: transform;
+}
+
+.jarallax>.jarallax-img {
+    position: absolute;
+    object-fit: cover;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    transform: translate3d(0, 0, 0);
+    transition: transform 0.1s ease-out;
+}
+
+/* Tối ưu cho mobile */
+@media (max-width: 768px) {
+    .parallax-quote-section.jarallax {
+        min-height: 350px;
+    }
+
+    .jarallax-img {
+        transform: none !important;
+        position: fixed;
+    }
 }
 
 .parallax-overlay {
@@ -814,9 +857,21 @@ p {
     width: 100%;
     height: 100%;
     background: linear-gradient(135deg,
-            rgba(0, 123, 255, 0.4) 0%,
-            rgba(0, 86, 179, 0.6) 100%);
+            rgba(0, 123, 255, 0.3) 0%,
+            rgba(0, 86, 179, 0.5) 50%,
+            rgba(138, 43, 226, 0.4) 100%);
     z-index: 1;
+    animation: overlay-breath 6s ease-in-out infinite alternate;
+}
+
+@keyframes overlay-breath {
+    0% {
+        opacity: 0.8;
+    }
+
+    100% {
+        opacity: 1;
+    }
 }
 
 .parallax-quote-section .container {
@@ -835,9 +890,25 @@ p {
     font-size: 2.2rem;
     line-height: 1.4;
     margin-bottom: 2rem;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    text-shadow:
+        2px 2px 4px rgba(0, 0, 0, 0.5),
+        0 0 20px rgba(255, 255, 255, 0.3);
     font-style: italic;
     color: var(--white);
+    transform: translateZ(0);
+    animation: text-float 4s ease-in-out infinite;
+}
+
+@keyframes text-float {
+
+    0%,
+    100% {
+        transform: translateY(0px) translateZ(0);
+    }
+
+    50% {
+        transform: translateY(-5px) translateZ(0);
+    }
 }
 
 .quote-author {
@@ -1001,12 +1072,70 @@ p {
     font-size: 0.9rem;
 }
 
-/* ===== CẢM XÚC CỘNG ĐỒNG ===== */
-.emotions-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-    gap: 30px;
+/* ===== CẢM XÚC CỘNG ĐỒNG SLIDER ===== */
+.emotions-slider-container {
+    position: relative;
     margin-top: 2rem;
+    padding: 0 60px;
+}
+
+.emotions-swiper {
+    width: 100%;
+    padding: 20px 0 40px 0;
+}
+
+.emotions-swiper .swiper-slide {
+    height: auto;
+    display: flex;
+    align-items: stretch;
+}
+
+/* Slider Navigation Arrows */
+.emotions-slider-prev,
+.emotions-slider-next {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 50px;
+    height: 50px;
+    background: var(--white);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow-medium);
+    cursor: pointer;
+    z-index: 10;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.emotions-slider-prev:hover,
+.emotions-slider-next:hover {
+    background: var(--primary-color);
+    color: var(--white);
+    transform: translateY(-50%) scale(1.1);
+    box-shadow: var(--shadow-heavy);
+}
+
+.emotions-slider-prev {
+    left: 0;
+}
+
+.emotions-slider-next {
+    right: 0;
+}
+
+.emotions-slider-prev i,
+.emotions-slider-next i {
+    font-size: 1.2rem;
+    color: var(--primary-color);
+    transition: color 0.3s ease;
+}
+
+.emotions-slider-prev:hover i,
+.emotions-slider-next:hover i {
+    color: var(--white);
 }
 
 .emotion-card {
@@ -1508,10 +1637,20 @@ p {
         font-size: 1.1rem;
     }
 
-    /* Emotions Grid Mobile */
-    .emotions-grid {
-        grid-template-columns: 1fr;
-        gap: 20px;
+    /* Emotions Slider Mobile */
+    .emotions-slider-container {
+        padding: 0 40px;
+    }
+
+    .emotions-slider-prev,
+    .emotions-slider-next {
+        width: 40px;
+        height: 40px;
+    }
+
+    .emotions-slider-prev i,
+    .emotions-slider-next i {
+        font-size: 1rem;
     }
 
     .emotion-content {
@@ -1668,9 +1807,19 @@ p {
         font-size: 1rem;
     }
 
-    .emotions-grid {
-        grid-template-columns: 1fr;
-        gap: 15px;
+    .emotions-slider-container {
+        padding: 0 30px;
+    }
+
+    .emotions-slider-prev,
+    .emotions-slider-next {
+        width: 35px;
+        height: 35px;
+    }
+
+    .emotions-slider-prev i,
+    .emotions-slider-next i {
+        font-size: 0.9rem;
     }
 
     .emotion-content {
