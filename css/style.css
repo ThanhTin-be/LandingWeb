@@ -1072,84 +1072,105 @@ p {
     font-size: 0.9rem;
 }
 
-/* ===== CẢM XÚC CỘNG ĐỒNG SLIDER ===== */
-.emotions-slider-container {
+/* ===== CẢM XÚC CỘNG ĐỒNG MARQUEE ===== */
+.emotions-marquee-container {
     position: relative;
     margin-top: 2rem;
-    padding: 0 60px;
+    overflow: hidden;
+    padding: 20px 0;
 }
 
-.emotions-swiper {
+.emotions-marquee {
     width: 100%;
-    padding: 20px 0 40px 0;
+    overflow: hidden;
+    position: relative;
 }
 
-.emotions-swiper .swiper-slide {
-    height: auto;
+.emotions-track {
     display: flex;
-    align-items: stretch;
+    animation: marquee-scroll 35s linear infinite;
+    gap: 30px;
+    will-change: transform;
 }
 
-/* Slider Navigation Arrows */
-.emotions-slider-prev,
-.emotions-slider-next {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 50px;
-    height: 50px;
-    background: var(--white);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: var(--shadow-medium);
-    cursor: pointer;
-    z-index: 10;
-    transition: all 0.3s ease;
-    border: 2px solid transparent;
+.emotions-marquee:hover .emotions-track {
+    animation-play-state: paused;
 }
 
-.emotions-slider-prev:hover,
-.emotions-slider-next:hover {
-    background: var(--primary-color);
-    color: var(--white);
-    transform: translateY(-50%) scale(1.1);
-    box-shadow: var(--shadow-heavy);
-}
+@keyframes marquee-scroll {
+    0% {
+        transform: translateX(0);
+    }
 
-.emotions-slider-prev {
-    left: 0;
-}
-
-.emotions-slider-next {
-    right: 0;
-}
-
-.emotions-slider-prev i,
-.emotions-slider-next i {
-    font-size: 1.2rem;
-    color: var(--primary-color);
-    transition: color 0.3s ease;
-}
-
-.emotions-slider-prev:hover i,
-.emotions-slider-next:hover i {
-    color: var(--white);
+    100% {
+        transform: translateX(-100%);
+    }
 }
 
 .emotion-card {
     background-color: var(--white);
-    border-radius: 20px;
+    border-radius: 15px;
     box-shadow: var(--shadow-light);
-    overflow: hidden;
     transition: all 0.4s ease;
     position: relative;
+    min-width: 320px;
+    max-width: 400px;
+    flex-shrink: 0;
+    border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 .emotion-card:hover {
-    transform: translateY(-10px);
+    transform: translateY(-5px);
     box-shadow: var(--shadow-heavy);
+}
+
+/* Card Header */
+.card-header {
+    display: flex;
+    align-items: center;
+    padding: 16px 16px 12px 16px;
+    gap: 12px;
+    border-bottom: 1px solid var(--bg-light);
+}
+
+.user-avatar {
+    flex-shrink: 0;
+}
+
+.user-avatar img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--bg-light);
+}
+
+.user-info {
+    flex-grow: 1;
+}
+
+.user-name {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-color);
+    margin: 0 0 2px 0;
+    font-family: "Inter", sans-serif;
+}
+
+.user-handle {
+    font-size: 0.8rem;
+    color: var(--primary-color);
+    margin: 0;
+    font-weight: 500;
+}
+
+/* Comment Content */
+.comment-content {
+    padding: 16px;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: var(--text-color);
+    font-style: italic;
 }
 
 .emotion-content {
@@ -1637,19 +1658,46 @@ p {
         font-size: 1.1rem;
     }
 
-    /* Emotions Slider Mobile */
-    .emotions-slider-container {
-        padding: 0 40px;
+    /* Emotions Marquee Mobile */
+    .emotions-marquee-container {
+        padding: 15px 0;
     }
 
-    .emotions-slider-prev,
-    .emotions-slider-next {
-        width: 40px;
-        height: 40px;
+    .emotions-track {
+        gap: 20px;
     }
 
-    .emotions-slider-prev i,
-    .emotions-slider-next i {
+    .emotion-card {
+        min-width: 280px;
+        max-width: 320px;
+    }
+
+    /* 3D Spinning Mobile */
+    .spin-contain {
+        min-height: 300px;
+    }
+
+    .outer-spin {
+        width: 100px;
+        height: 100px;
+    }
+
+    .inner-contain {
+        width: 65px;
+        height: 65px;
+    }
+
+    .play-btn {
+        width: 60px;
+        height: 60px;
+        font-size: 1.5rem;
+    }
+
+    .play-video-modal {
+        margin-top: 150px;
+    }
+
+    .video-text p {
         font-size: 1rem;
     }
 
@@ -1807,18 +1855,54 @@ p {
         font-size: 1rem;
     }
 
-    .emotions-slider-container {
-        padding: 0 30px;
+    .emotions-marquee-container {
+        padding: 10px 0;
     }
 
-    .emotions-slider-prev,
-    .emotions-slider-next {
-        width: 35px;
-        height: 35px;
+    .emotions-track {
+        gap: 15px;
     }
 
-    .emotions-slider-prev i,
-    .emotions-slider-next i {
+    .emotion-card {
+        min-width: 250px;
+        max-width: 280px;
+    }
+
+    .card-header {
+        padding: 15px 15px 10px 15px;
+    }
+
+    .comment-content {
+        padding: 0 15px 15px 15px;
+        font-size: 0.9rem;
+    }
+
+    /* 3D Spinning Extra Small Mobile */
+    .spin-contain {
+        min-height: 250px;
+    }
+
+    .outer-spin {
+        width: 80px;
+        height: 80px;
+    }
+
+    .inner-contain {
+        width: 50px;
+        height: 50px;
+    }
+
+    .play-btn {
+        width: 50px;
+        height: 50px;
+        font-size: 1.2rem;
+    }
+
+    .play-video-modal {
+        margin-top: 120px;
+    }
+
+    .video-text p {
         font-size: 0.9rem;
     }
 

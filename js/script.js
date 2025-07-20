@@ -489,7 +489,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                         // Delay khác nhau cho mỗi counter để tạo hiệu ứng cascade
                         setTimeout(() => {
-                            animateCounter(statNumber, 0, targetNumber, 2000, suffix);
+                            animateCounter(statNumber, 0, targetNumber, 3000, suffix);
                             // Thêm class để kích hoạt hiệu ứng underline
                             statNumber.closest('.stat-item').classList.add('animated');
                         }, index * 200);
