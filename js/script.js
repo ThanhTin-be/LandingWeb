@@ -489,7 +489,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                         // Delay khác nhau cho mỗi counter để tạo hiệu ứng cascade
                         setTimeout(() => {
-                            animateCounter(statNumber, 0, targetNumber, 3000, suffix);
+                            animateCounter(statNumber, 0, targetNumber, 2500, suffix);
                             // Thêm class để kích hoạt hiệu ứng underline
                             statNumber.closest('.stat-item').classList.add('animated');
                         }, index * 200);
@@ -506,6 +506,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         statsObserver.observe(statsSection);
     }
+
 
     // ===== JARALLAX PARALLAX INITIALIZATION =====
     // Khởi tạo Jarallax sau khi DOM loaded
@@ -557,4 +558,21 @@ document.addEventListener('DOMContentLoaded', function () {
             },
         },
     });
+});
+
+//Cảm xúc cộng đồng
+// Trong file script.js, thêm vào sau phần khởi tạo Swiper hoặc trong DOMContentLoaded
+document.addEventListener('DOMContentLoaded', function () {
+    const emotionsTrack = document.querySelector('.emotions-track');
+    const emotionCards = Array.from(emotionsTrack.querySelectorAll('.emotion-card'));
+
+    // Nhân bản card 2 lần để đảm bảo track đủ dài
+    for (let i = 0; i < 2; i++) {
+        emotionCards.forEach(card => {
+            const clone = card.cloneNode(true);
+            emotionsTrack.appendChild(clone);
+        });
+    }
+
+    console.log('✅ Đã nhân bản các card trong emotions-track (2 lần) để tạo hiệu ứng marquee liên tục');
 });

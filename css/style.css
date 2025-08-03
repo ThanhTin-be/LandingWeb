@@ -919,6 +919,7 @@ p {
     font-style: italic;
 }
 
+
 /* ===== BÀI DỰ THI ===== */
 .submission-grid {
     display: grid;
@@ -1088,11 +1089,13 @@ p {
 
 .emotions-track {
     display: flex;
-    animation: marquee-scroll 35s linear infinite;
+    animation: marquee-scroll 25s linear infinite;
     gap: 30px;
     will-change: transform;
+    width: max-content;
 }
 
+/* Tạm pause khi hover */
 .emotions-marquee:hover .emotions-track {
     animation-play-state: paused;
 }
@@ -1103,7 +1106,7 @@ p {
     }
 
     100% {
-        transform: translateX(-100%);
+        transform: translateX(-33.33%);
     }
 }
 
